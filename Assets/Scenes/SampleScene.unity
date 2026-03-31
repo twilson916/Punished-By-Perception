@@ -1329,7 +1329,7 @@ GameObject:
   - component: {fileID: 216421203}
   - component: {fileID: 216421202}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Spawn Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1378,7 +1378,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 216421201}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -3443,6 +3443,105 @@ Transform:
   m_Children: []
   m_Father: {fileID: 543489780}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &666628728
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.3300002
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8068045142930012112, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_Name
+      value: Dummy Room (For lighting)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9182699457045090501, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 666628730}
+  m_SourcePrefab: {fileID: 100100000, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
+--- !u!1 &666628729 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9182699457045090501, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+    type: 3}
+  m_PrefabInstance: {fileID: 666628728}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &666628730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 666628729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49fa95a3cb48ef24cbf6dff07fecf4f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  destinationCube: {fileID: 2367028068152370092}
+  locomotor: {fileID: 1730939}
+  cooldownSeconds: 1
+--- !u!1 &673212013 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9182699457045090501, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+    type: 3}
+  m_PrefabInstance: {fileID: 1553301401}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &690789031
 GameObject:
   m_ObjectHideFlags: 0
@@ -8279,8 +8378,27 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9182699457045090501, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1553301406}
   m_SourcePrefab: {fileID: 100100000, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
+--- !u!114 &1553301406
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 673212013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49fa95a3cb48ef24cbf6dff07fecf4f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  destinationCube: {fileID: 2367028068152370092}
+  locomotor: {fileID: 1730939}
+  cooldownSeconds: 1
 --- !u!1 &1564184359
 GameObject:
   m_ObjectHideFlags: 0
@@ -11949,11 +12067,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Room1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 2063980937653077553, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
+--- !u!4 &2367028068152370092 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7608204413197258315, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+    type: 3}
+  m_PrefabInstance: {fileID: 2367028068152370089}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -11963,5 +12088,6 @@ SceneRoots:
   - {fileID: 2367028068152370089}
   - {fileID: 1803278991}
   - {fileID: 1553301401}
+  - {fileID: 666628728}
   - {fileID: 946797575}
   - {fileID: 216421206}
