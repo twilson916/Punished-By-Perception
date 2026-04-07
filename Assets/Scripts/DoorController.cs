@@ -26,6 +26,12 @@ public class DoorController : MonoBehaviour
     [SerializeField] private HandGrabInteractable handGrabInteractable;
     [SerializeField] private GrabInteractable grabInteractable;
 
+    [Header("Audio")]
+    public AudioClip doorOpenClip;
+    public AudioClip doorCloseClip;
+
+    private AudioSource audioSource;
+
     private Quaternion closedRotation;
     private Quaternion openRotation;
 
@@ -38,6 +44,8 @@ public class DoorController : MonoBehaviour
 
         // Calculate the final "open" state by multiplying the start by your offset
         openRotation = closedRotation * Quaternion.Euler(rotationOffset);
+
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Start()
@@ -96,6 +104,8 @@ public class DoorController : MonoBehaviour
             Quaternion startRot = transform.localRotation;
             float timeElapsed = 0f;
 
+            PlayDoorSound(doorOpenClip, 1f);
+
             while (timeElapsed < animationDuration)
             {
                 timeElapsed += Time.deltaTime;
@@ -120,6 +130,8 @@ public class DoorController : MonoBehaviour
             Quaternion startRot = transform.localRotation;
             float timeElapsed = 0f;
 
+            PlayDoorSound(doorCloseClip, 1f);
+
             while (timeElapsed < animationDuration / 3.0) // Close the door quicker
             {
                 timeElapsed += Time.deltaTime;
@@ -132,8 +144,14 @@ public class DoorController : MonoBehaviour
         }
     }
 
-    // change color of doors
-    public void ChangeDoorColor(Color doorColor, Color handleColor)
+    private void PlayDoorSound(AudioClip clip, float speed = 1f)
+    {
+        audioSource.clip = clip;
+        audioSource.pitch = speed;
+        audioSource.Play();
+    }
+
+    public void ChangeDoorColor(Color doorColor, Color handleColor) // Change color of doors
     {
         // Change the main door body
         if (mainDoorMesh != null)
