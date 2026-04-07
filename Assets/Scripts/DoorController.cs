@@ -3,10 +3,10 @@ using Oculus.Interaction.HandGrab;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MyGame.Resources;
 
 public class DoorController : MonoBehaviour
 {
-    public enum DoorPos { Left=0, Middle=1, Right=2 };
     [Header("Object Identifiers/Logic")]
     [Tooltip("Door position must be set as left middle or right from unity inspector")]
     public DoorPos position;
@@ -26,8 +26,6 @@ public class DoorController : MonoBehaviour
     [SerializeField] private HandGrabInteractable handGrabInteractable;
     [SerializeField] private GrabInteractable grabInteractable;
 
-
-    private bool handIsNear = true; //FIXME testing only
     private Quaternion closedRotation;
     private Quaternion openRotation;
 
@@ -83,36 +81,6 @@ public class DoorController : MonoBehaviour
 
     }
 
-    //private void OnTriggerEnter(Collider other)
-    //{
-    //    //if (other.CompareTag("PlayerHand")) handIsNear = true;
-    //    int x = 0;
-    //}
-
-    //private void OnTriggerExit(Collider other)
-    //{
-    //    //if (other.CompareTag("PlayerHand")) handIsNear = false;
-    //    int x = 0;
-    //}
-
-    private void Update()
-    {
-        //if (isLocked || !handIsNear) return;
-
-        //bool leftClick = OVRInput.GetDown(OVRInput.RawButton.LIndexTrigger);
-        //bool rightClick = OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger);
-        //OVRHand hand = GetComponent<OVRHand>();
-        //bool res = hand.GetFingerIsPinching(OVRHand.HandFinger.Index);
-
-        //if (leftClick || rightClick)
-        //{
-        //    isLocked = true; //lockout to prevent double triggers
-
-        //    Debug.Log($"DoorController: Door {position} Clicked!");
-        //    GameManager.Instance.OnDoorClicked(position);
-        //}
-    }
-
     // open/close animation public functions
     public void OpenDoor()
     {
@@ -152,7 +120,7 @@ public class DoorController : MonoBehaviour
             Quaternion startRot = transform.localRotation;
             float timeElapsed = 0f;
 
-            while (timeElapsed < animationDuration)
+            while (timeElapsed < animationDuration / 3.0) // Close the door quicker
             {
                 timeElapsed += Time.deltaTime;
                 float t = Mathf.SmoothStep(0, 1, timeElapsed / animationDuration);
@@ -165,12 +133,12 @@ public class DoorController : MonoBehaviour
     }
 
     // change color of doors
-    public void SetDoorColor(Color newColor)
+    public void ChangeDoorColor(Color doorColor, Color handleColor)
     {
         // Change the main door body
         if (mainDoorMesh != null)
         {
-            mainDoorMesh.material.color = newColor;
+            mainDoorMesh.material.color = doorColor;
         }
 
         // Change the handles
@@ -178,7 +146,7 @@ public class DoorController : MonoBehaviour
         {
             if (handle != null)
             {
-                handle.material.color = newColor;
+                handle.material.color = handleColor;
             }
         }
     }

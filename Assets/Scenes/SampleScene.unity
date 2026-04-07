@@ -5446,6 +5446,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneRooms:
+  - {fileID: 1834319625}
   - {fileID: 705506070}
   - {fileID: 611277958}
   - {fileID: 2025704710}
@@ -7851,7 +7852,7 @@ PrefabInstance:
     - target: {fileID: 8068045142930012112, guid: 0d6ebd74a1642294bb5776639c1d23c5,
         type: 3}
       propertyPath: m_Name
-      value: Dummy Room (For lighting)
+      value: RoomN1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 2063980937653077553, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
@@ -8456,7 +8457,31 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1553301406}
+    - targetCorrespondingSourceObject: {fileID: 4266029472799716932, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1553301403}
   m_SourcePrefab: {fileID: 100100000, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
+--- !u!1 &1553301402 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4266029472799716932, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+    type: 3}
+  m_PrefabInstance: {fileID: 1553301401}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1553301403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553301402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97e1268f0801f5143b5e50f892b46f0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  locomotor: {fileID: 1730939}
+  roomNum: 3
 --- !u!114 &1553301406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9770,8 +9795,32 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4266029472799716932, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1803278993}
   m_SourcePrefab: {fileID: 100100000, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
+--- !u!1 &1803278992 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4266029472799716932, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+    type: 3}
+  m_PrefabInstance: {fileID: 1803278991}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1803278993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1803278992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97e1268f0801f5143b5e50f892b46f0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  locomotor: {fileID: 1730939}
+  roomNum: 2
 --- !u!1 &1810092652
 GameObject:
   m_ObjectHideFlags: 0
@@ -10116,6 +10165,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1597096521}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1834319625 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7711860977683628968, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+    type: 3}
+  m_PrefabInstance: {fileID: 1399266659}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32161b28f577cf446a411de10fa27a5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1834741060
 GameObject:
   m_ObjectHideFlags: 0
@@ -12156,8 +12217,32 @@ PrefabInstance:
     - {fileID: 2063980937653077553, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4266029472799716932, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2367028068152370091}
   m_SourcePrefab: {fileID: 100100000, guid: 0d6ebd74a1642294bb5776639c1d23c5, type: 3}
+--- !u!1 &2367028068152370090 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4266029472799716932, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+    type: 3}
+  m_PrefabInstance: {fileID: 2367028068152370089}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2367028068152370091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2367028068152370090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97e1268f0801f5143b5e50f892b46f0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  locomotor: {fileID: 1730939}
+  roomNum: 1
 --- !u!4 &2367028068152370092 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7608204413197258315, guid: 0d6ebd74a1642294bb5776639c1d23c5,
@@ -12170,10 +12255,10 @@ SceneRoots:
   m_Roots:
   - {fileID: 1078216550}
   - {fileID: 18489350}
+  - {fileID: 1399266659}
   - {fileID: 2367028068152370089}
   - {fileID: 1803278991}
   - {fileID: 1553301401}
   - {fileID: 666628728}
-  - {fileID: 1399266659}
   - {fileID: 946797575}
   - {fileID: 216421206}

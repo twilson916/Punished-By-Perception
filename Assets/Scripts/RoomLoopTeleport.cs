@@ -19,34 +19,36 @@ public class MetaSeamlessPortal : MonoBehaviour
 
     private void Start()
     {
-        // 1. Initial Dependency Checks
+        // Initial Dependency Checks
         if (locomotor == null || destinationCube == null)
         {
             Debug.LogError($"Portal on {gameObject.name} is missing references!");
             return;
         }
 
-        // 2. Validate the geometry (Ensures the illusion won't break)
+        // Validate the geometry (Ensures the illusion won't break)
         // We check if the destination cube has the exact same scale as this cube.
         if (transform.localScale != destinationCube.localScale)
         {
             Debug.LogWarning($"Portal Warning: {gameObject.name} and {destinationCube.name} are different sizes! The relative math might feel slightly off to the player.");
         }
 
-        // 3. Ensure this cube is actually set up as a trigger
+        // Ensure this cube is actually set up as a trigger
         GetComponent<BoxCollider>().isTrigger = true;
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // 4. Cooldown Check
+        // Cooldown Check
         if (Time.time < lastTeleportTime + cooldownSeconds) return;
 
-        // 5. Check if the thing that entered the box is actually the player
+        // Check if the thing that entered the box is actually the player
         // We do this by looking to see if the collider belongs to the Locomotor rig
         if (other.GetComponentInParent<FirstPersonLocomotor>() == locomotor)
         {
             ExecuteSeamlessTeleport();
+
+            GameManager.Instance.OnLoopTeleport();
         }
     }
 
@@ -55,15 +57,14 @@ public class MetaSeamlessPortal : MonoBehaviour
         // Mark the time so we don't instantly bounce back
         lastTeleportTime = Time.time;
 
-        // A. Get the player's HMD/Controller position
+        // Get the player's HMD/Controller position
         Vector3 currentWorldPos = locomotor.transform.position;
         Quaternion currentWorldRot = locomotor.transform.rotation;
 
-        // B. Calculate the relative X/Z math
+        // Calculate the relative X/Z math
         Vector3 relativeLocalPos = transform.InverseTransformPoint(currentWorldPos);
         Vector3 targetWorldPos = destinationCube.TransformPoint(relativeLocalPos);
 
-        // --- THE GRAVITY FIX ---
         // We find out exactly how high your head/center is from the floor of your rig.
         float heightFromFloor = locomotor.transform.localPosition.y;
 
@@ -71,11 +72,11 @@ public class MetaSeamlessPortal : MonoBehaviour
         // This guarantees the teleport event receives the exact coordinates of the FLOOR, not your head!
         targetWorldPos.y = currentWorldPos.y - heightFromFloor;
 
-        // C. Calculate the relative rotation
+        // Calculate the relative rotation
         Quaternion relativeLocalRot = Quaternion.Inverse(transform.rotation) * currentWorldRot;
         Quaternion targetWorldRot = destinationCube.rotation * relativeLocalRot;
 
-        // --- THE EVENT ---
+        // Send teleport request event
         Pose targetPose = new Pose(targetWorldPos, targetWorldRot);
 
         LocomotionEvent teleportEvent = new LocomotionEvent(
@@ -85,7 +86,6 @@ public class MetaSeamlessPortal : MonoBehaviour
             LocomotionEvent.RotationType.Absolute
         );
 
-        // Fire the event
         locomotor.HandleLocomotionEvent(teleportEvent);
 
         Debug.Log($"Seamless teleport executed from {gameObject.name} to {destinationCube.name}");

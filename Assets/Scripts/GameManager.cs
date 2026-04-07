@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MyGame.Resources;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,13 +15,15 @@ public class GameManager : MonoBehaviour
     public List<RoomController> sceneRooms;
 
     // game state enum
-    public enum GameState { Exploring, Puzzle, Ending }; //placeholders for now
     private GameState currentState;
 
     // keep track of room count/progress
     private int totalRoomsVisited = 1;
-    private enum RoomNumber { One=0, Two=1, Three=2 }; //note that the player is only in room 3 to be teleported (for game logic rooms 1 and 3 can be considered the same room)
+    //note that the player is only in room 3 to be teleported (for game logic rooms 1 and 3 can be considered the same room)
     private RoomNumber currentRoom = RoomNumber.One;
+
+    // queue of future rooms
+    Queue<RoomColors> roomColorQueue = new Queue<RoomColors>();
 
     private void Awake()
     {
@@ -40,19 +44,45 @@ public class GameManager : MonoBehaviour
 
         //unlock first rooms doors
         sceneRooms[(int)currentRoom].SetLockDoors(false);
+
+
+
+        //FIXME TESTING ONLY
+        for (int i = 0; i < 5; i++)
+        {
+            RoomColors roomColors = new RoomColors
+            (
+                doors: new Color[] { ColorUtils.GetRandColor(), ColorUtils.GetRandColor(), ColorUtils.GetRandColor() },
+                doorHandles: new Color[] { ColorUtils.GetRandColor(), ColorUtils.GetRandColor(), ColorUtils.GetRandColor() }
+            );
+            roomColorQueue.Enqueue(roomColors);
+        }
+
+
+        RoomColors initialRoomColors = new RoomColors
+            (
+                doors: new Color[] { Color.white, Color.white, Color.white },
+                doorHandles: new Color[] { Color.grey, Color.grey, Color.grey }
+            );
+
+        //Set initial rooms color (subsequent loops handled by triggers)
+        sceneRooms[(int)RoomNumber.MinusOne].ChangeRoomColor(initialRoomColors);
+        sceneRooms[(int)RoomNumber.One].ChangeRoomColor(roomColorQueue.Dequeue());
+        var colors = roomColorQueue.Dequeue();
+        sceneRooms[(int)RoomNumber.Two].ChangeRoomColor(colors);
+        lastRoom2Colors = colors;
     }
+    
+    // --- Signal receivers for other scripts to signal manager ---
 
-    // signal receivers for other scripts to signal manager
-
-    // when loop teleport takes user from room 3 to 1
-    public void OnLoopTeleport()
+    public void OnLoopTeleport() // When loop teleport takes user from room 3 to 1
     {
         currentRoom = RoomNumber.One;
 
-        // update logic and door/room decor/color
+        // //TODO add logic (door/room decor/color, etc)
     }
 
-    public void OnDoorClicked(DoorController.DoorPos pos)
+    public void OnDoorClicked(DoorPos pos)
     {
         sceneRooms[(int)currentRoom].SetLockDoors(true);
 
@@ -61,8 +91,42 @@ public class GameManager : MonoBehaviour
         //TODO add logic
     }
 
-    public void OnDoorCloseTrigger(GameObject Trigger)
+    private RoomColors lastRoom2Colors; //used to keep track of colors used for room 2 to be applied to room N1
+    private RoomColors lastRoom3Colors; //used to keep track of colors used for room 2 to be applied to room 1
+    public void OnRoomEntry(RoomNumber newRoomNum) //Player has entered a room, thus close the doors behind them and unlock next set of doors
     {
+        if (currentRoom == newRoomNum) return; // Triggered again while in same room thus ignore
 
+        RoomColors colors;
+
+        switch(newRoomNum) {
+            case RoomNumber.One:
+                totalRoomsVisited++; // If just entered room 1 or 2 then increment rooms visited
+
+                colors = roomColorQueue.Dequeue();
+                lastRoom2Colors = colors;
+                sceneRooms[(int)RoomNumber.Two].ChangeRoomColor(colors);
+                break;
+            case RoomNumber.Two:
+                totalRoomsVisited++;
+                sceneRooms[(int)newRoomNum - 1].CloseAllDoors(); // For either room two or three close doors behind them
+
+                colors = roomColorQueue.Dequeue();
+                lastRoom3Colors = colors;
+                sceneRooms[(int)RoomNumber.Three].ChangeRoomColor(colors);
+                sceneRooms[(int)RoomNumber.MinusOne].ChangeRoomColor(lastRoom2Colors);
+                break;
+            case RoomNumber.Three:
+                sceneRooms[(int)newRoomNum - 1].CloseAllDoors();
+
+                sceneRooms[(int)RoomNumber.One].ChangeRoomColor(lastRoom3Colors);
+                break;
+        }
+
+        sceneRooms[(int)newRoomNum].SetLockDoors(false); // Unlock doors in new room
+
+        currentRoom = newRoomNum; // Update current room
+
+        //TODO add logic (modify room behind them according to next layout)
     }
 }

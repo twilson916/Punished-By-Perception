@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MyGame.Resources;
+using MyGame.Resources;
+
 public class RoomController : MonoBehaviour
 {
     // The room keeps track of its own doors
@@ -17,7 +20,7 @@ public class RoomController : MonoBehaviour
         }
     }
 
-    public void OpenDoor(DoorController.DoorPos pos)
+    public void OpenDoor(DoorPos pos)
     {
         doors[(int)pos].OpenDoor();
     }
@@ -30,7 +33,7 @@ public class RoomController : MonoBehaviour
         }
     }
 
-    public void CloseDoor(DoorController.DoorPos pos)
+    public void CloseDoor(DoorPos pos)
     {
         doors[(int)pos].CloseDoor();
     }
@@ -43,8 +46,19 @@ public class RoomController : MonoBehaviour
         }
     }
 
-    public void ChangeWallColor(Color newColor)
+    private void ChangeWallColor(Color newColor)
     {
         // Change material color, swap props, etc.
+    }
+
+    public void ChangeRoomColor(RoomColors colors)
+    {
+        //Change door and handle colors
+        for(int i = 0; i < 3; i++)
+        {
+            doors[i].ChangeDoorColor(colors.doors[i], colors.doorHandles[i]);
+        }
+
+        //TODO add logic for other colors
     }
 }
