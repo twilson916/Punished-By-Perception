@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
     [Header("Dependencies")]
     [Tooltip("Drag the rooms into this list from rooms 1->3")]
     public List<RoomController> sceneRooms;
+    [Tooltip("Drag in the punishment manager")]
+    public PunishmentManager punisher;
 
     // game state enum
     private GameState currentState;
@@ -48,7 +50,7 @@ public class GameManager : MonoBehaviour
 
 
         //FIXME TESTING ONLY
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 25; i++)
         {
             RoomColors roomColors = new RoomColors
             (
@@ -128,5 +130,17 @@ public class GameManager : MonoBehaviour
         currentRoom = newRoomNum; // Update current room
 
         //TODO add logic (modify room behind them according to next layout)
+
+
+
+        //FIXME TESTING ONLY
+        //punisher.Punish(PunishmentManager.PunishmentType.Saturation, 1);
+        //punisher.Punish(PunishmentManager.PunishmentType.HueShift, 1);
+        //punisher.Punish(PunishmentManager.PunishmentType.ColorTint, 1);
+        //punisher.Punish(PunishmentManager.PunishmentType.Blur, 1);
+        //punisher.Punish(PunishmentManager.PunishmentType.LensDistortion, 1);
+        //punisher.Punish(PunishmentManager.PunishmentType.FilmGrain, 1);
+        //punisher.Punish(PunishmentManager.PunishmentType.Vignette, 1);
+        //punisher.Punish(PunishmentManager.PunishmentType.ChromaticAberration, 1);
     }
 }
