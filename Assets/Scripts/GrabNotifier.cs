@@ -1,9 +1,12 @@
 using System.Collections;
 using UnityEngine;
 using Oculus.Interaction;
+using Oculus.Interaction.HandGrab;
 
 public class GrabNotifier : MonoBehaviour
 {
+    [Header("Interactables")]
+    [SerializeField] private HandGrabInteractable _handGrabInteractable;
     [SerializeField] private GrabInteractable _grabInteractable;
 
     private Vector3 _startPosition;
@@ -18,25 +21,35 @@ public class GrabNotifier : MonoBehaviour
         _startRotation = transform.rotation;
         _rb = GetComponent<Rigidbody>();
 
+        if (_handGrabInteractable == null)
+            _handGrabInteractable = GetComponentInChildren<HandGrabInteractable>();
         if (_grabInteractable == null)
             _grabInteractable = GetComponentInChildren<GrabInteractable>();
     }
 
     private void Start()
     {
+        if (_handGrabInteractable != null)
+        {
+            _handGrabInteractable.WhenSelectingInteractorViewAdded += OnGrabbed;
+            _handGrabInteractable.WhenSelectingInteractorViewRemoved += OnReleased;
+        }
         if (_grabInteractable != null)
         {
             _grabInteractable.WhenSelectingInteractorViewAdded += OnGrabbed;
             _grabInteractable.WhenSelectingInteractorViewRemoved += OnReleased;
         }
-        else
-        {
-            Debug.LogError($"No GrabInteractable found on {gameObject.name}!");
-        }
+
+        Debug.Log($"GrabNotifier {gameObject.name} - HandGrab: {_handGrabInteractable != null}, Grab: {_grabInteractable != null}");
     }
 
     private void OnDestroy()
     {
+        if (_handGrabInteractable != null)
+        {
+            _handGrabInteractable.WhenSelectingInteractorViewAdded -= OnGrabbed;
+            _handGrabInteractable.WhenSelectingInteractorViewRemoved -= OnReleased;
+        }
         if (_grabInteractable != null)
         {
             _grabInteractable.WhenSelectingInteractorViewAdded -= OnGrabbed;

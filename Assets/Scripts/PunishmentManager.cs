@@ -1,8 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using System.Linq;
 using UnityEngine;
-
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -10,7 +9,6 @@ public class PunishmentManager : MonoBehaviour
 {
     public enum PunishmentType { Saturation, HueShift, ColorTint, Blur, LensDistortion, FilmGrain, Vignette, ChromaticAberration };
 
-    // Keep track of how many punishments of each type the user currently has
     private Dictionary<PunishmentType, int> punishmentValues = new()
     {
         { PunishmentType.Saturation, 0 },
@@ -23,37 +21,105 @@ public class PunishmentManager : MonoBehaviour
         { PunishmentType.ChromaticAberration, 0 }
     };
 
-    // Start is called before the first frame update
-    void Start()
+    // Max stacks for each type before it's fully maxed out
+    private static readonly Dictionary<PunishmentType, int> maxStacks = new()
     {
+        { PunishmentType.Saturation, 3 },       // 3 * 33.33 = ~100
+        { PunishmentType.HueShift, 12 },         // 12 * 15 = 180
+        { PunishmentType.ColorTint, 4 },
+        { PunishmentType.Blur, 7 },              // 7 * 40 = 280 (under 300 cap)
+        { PunishmentType.LensDistortion, 4 },    // 4 * 0.25 = 1.0
+        { PunishmentType.FilmGrain, 1 },
+        { PunishmentType.Vignette, 1 },
+        { PunishmentType.ChromaticAberration, 1 }
+    };
 
+    public Dictionary<PunishmentType, int> GetCurrentPunishValues()
+    {
+        return new Dictionary<PunishmentType, int>(punishmentValues);
     }
 
-    // Update is called once per frame
-    void Update()
+    public bool IsMaxed(PunishmentType type)
     {
-
+        return punishmentValues[type] >= maxStacks[type];
     }
 
-    public Dictionary<PunishmentType, int> GetCurrentPunishValues() {
-        return punishmentValues;
+    public bool IsAllMaxed()
+    {
+        return punishmentValues.All(kvp => kvp.Value >= maxStacks[kvp.Key]);
     }
 
-    public bool Punish(PunishmentType type, int severity = 1) // higher severity is basically like double or triple punishments
+    /// High-level: randomly distributes severity across available punishment types.
+    /// Returns true if full severity was applied, false otherwise.
+    /// If forcePunish is true, applies as much as possible.
+    public bool Punish(int severity, bool forcePunish = false)
     {
-        switch(type)
+        int remaining = severity;
+
+        // Get all types that aren't maxed and shuffle them
+        List<PunishmentType> available = punishmentValues
+            .Where(kvp => kvp.Value < maxStacks[kvp.Key])
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        Shuffle(available);
+
+        // Spread one unit across random available types
+        foreach (var type in available)
+        {
+            if (remaining <= 0) break;
+
+            int applied = Punish(type, 1);
+            remaining -= applied;
+        }
+
+        // If force and still remaining, loop again on anything that has room
+        if (forcePunish && remaining > 0)
+        {
+            available = punishmentValues
+                .Where(kvp => kvp.Value < maxStacks[kvp.Key])
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            Shuffle(available);
+
+            foreach (var type in available)
+            {
+                if (remaining <= 0) break;
+
+                int applied = Punish(type, remaining);
+                remaining -= applied;
+            }
+        }
+
+        if (remaining > 0)
+        {
+            Debug.LogWarning($"Could not apply full punishment. Applied {severity - remaining}/{severity}");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// Low-level: applies punishment to a specific type.
+    /// Returns the number of severity units actually applied.
+    public int Punish(PunishmentType type, int severity = 1)
+    {
+        // Cap severity to what's actually available
+        int room = maxStacks[type] - punishmentValues[type];
+        int actualSeverity = Mathf.Min(severity, room);
+
+        if (actualSeverity <= 0) return 0;
+
+        switch (type)
         {
             case PunishmentType.Saturation:
                 {
                     Volume volume = GetComponent<Volume>();
                     volume.profile.TryGet(out ColorAdjustments colorAdjustments);
-                    float current = colorAdjustments.saturation.value;
-                    float newVal = Mathf.Clamp(current - 33.33f * severity, -100f, 0f);
-
-                    if (Mathf.Abs(current - newVal) < 1e-6) return false;
-
-                    colorAdjustments.saturation.Override(newVal); // -100 = full grayscale
-                    punishmentValues[PunishmentType.Saturation] += severity;
+                    float newVal = Mathf.Clamp(colorAdjustments.saturation.value - 33.33f * actualSeverity, -100f, 0f);
+                    colorAdjustments.saturation.Override(newVal);
+                    punishmentValues[type] += actualSeverity;
                 }
                 break;
 
@@ -61,104 +127,86 @@ public class PunishmentManager : MonoBehaviour
                 {
                     Volume volume = GetComponent<Volume>();
                     volume.profile.TryGet(out ColorAdjustments colorAdjustments);
-                    float current = colorAdjustments.hueShift.value;
-                    float newVal = Mathf.Clamp(current - 15f * severity, -180f, 180f);
-
-                    if (Mathf.Abs(current - newVal) < 1e-6) return false;
-
-                    colorAdjustments.hueShift.Override(newVal); // -180 = opposite side of color wheel
-                    punishmentValues[PunishmentType.HueShift] += severity;
+                    float newVal = Mathf.Clamp(colorAdjustments.hueShift.value - 15f * actualSeverity, -180f, 180f);
+                    colorAdjustments.hueShift.Override(newVal);
+                    punishmentValues[type] += actualSeverity;
                 }
                 break;
+
             case PunishmentType.ColorTint:
                 {
-                    Color startColor = Color.white; // no tint
-                    Color endColor = new Color(0.1f, 0.02f, 0.02f); // dark red tint
-                    int numSteps = 4;
+                    Color startColor = Color.white;
+                    Color endColor = new Color(0.1f, 0.02f, 0.02f);
+
+                    punishmentValues[type] = Mathf.Min(punishmentValues[type] + actualSeverity, maxStacks[type]);
+
+                    float t = (float)punishmentValues[type] / maxStacks[type];
+                    Color tint = Color.Lerp(startColor, endColor, t);
 
                     Volume volume = GetComponent<Volume>();
                     volume.profile.TryGet(out ColorAdjustments colorAdjustments);
-
-                    punishmentValues[PunishmentType.ColorTint] = Mathf.Clamp(punishmentValues[PunishmentType.ColorTint] + severity, 0, numSteps);
-
-                    int steps = punishmentValues[PunishmentType.ColorTint];
-                    float t = (float)steps / numSteps;
-                    Color tint = Color.Lerp(startColor, endColor, t);
-
-                    float diff = Vector4.Distance(tint, endColor);
-                    if (diff < 1e-6f) return false;
-
                     colorAdjustments.colorFilter.Override(tint);
-
                 }
                 break;
+
             case PunishmentType.Blur:
                 {
                     Volume volume = GetComponent<Volume>();
                     volume.profile.TryGet(out DepthOfField dof);
                     dof.mode.Override(DepthOfFieldMode.Bokeh);
-                    float current = dof.focalLength.value;
-                    float newVal = Mathf.Clamp(current + 40f * severity, 0f, 300f);
-
-                    if (Mathf.Abs(current - newVal) < 1e-6) return false;
-
+                    float newVal = Mathf.Clamp(dof.focalLength.value + 40f * actualSeverity, 0f, 300f);
                     dof.focalLength.Override(newVal);
-                    punishmentValues[PunishmentType.Blur] += severity;
+                    punishmentValues[type] += actualSeverity;
                 }
                 break;
+
             case PunishmentType.LensDistortion:
                 {
                     Volume volume = GetComponent<Volume>();
                     volume.profile.TryGet(out LensDistortion lensDistortion);
-                    float current = lensDistortion.intensity.value;
-                    float newVal = Mathf.Clamp(current + 0.25f * severity, 0f, 1f);
-
-                    if (Mathf.Abs(current - newVal) < 1e-6) return false;
-
+                    float newVal = Mathf.Clamp(lensDistortion.intensity.value + 0.25f * actualSeverity, 0f, 1f);
                     lensDistortion.intensity.Override(newVal);
-                    punishmentValues[PunishmentType.LensDistortion] += severity;
+                    punishmentValues[type] += actualSeverity;
                 }
                 break;
+
             case PunishmentType.FilmGrain:
                 {
                     Volume volume = GetComponent<Volume>();
                     volume.profile.TryGet(out FilmGrain filmGrain);
-                    float current = filmGrain.intensity.value;
-                    float newVal = 1.0f;
-
-                    if (Mathf.Abs(current - newVal) < 1e-6f) return false;
-
-                    filmGrain.intensity.Override(newVal);
-                    punishmentValues[PunishmentType.FilmGrain] = 1; //binary punishment, no severity
+                    filmGrain.intensity.Override(1.0f);
+                    punishmentValues[type] = 1;
                 }
                 break;
+
             case PunishmentType.Vignette:
                 {
                     Volume volume = GetComponent<Volume>();
                     volume.profile.TryGet(out Vignette vignette);
-                    float current = vignette.intensity.value;
-                    float newVal = 1.0f
-                        ;
-                    if (Mathf.Abs(current - newVal) < 1e-6f) return false;
-
-                    vignette.intensity.Override(newVal);
-                    punishmentValues[PunishmentType.Vignette] = 1; //binary punishment, no severity
+                    vignette.intensity.Override(1.0f);
+                    punishmentValues[type] = 1;
                 }
                 break;
+
             case PunishmentType.ChromaticAberration:
                 {
                     Volume volume = GetComponent<Volume>();
                     volume.profile.TryGet(out ChromaticAberration chromaticAberration);
-                    float current = chromaticAberration.intensity.value;
-                    float newVal = 1.0f;
-
-                    if (Mathf.Abs(current - newVal) < 1e-6f) return false;
-
-                    chromaticAberration.intensity.Override(newVal);
-                    punishmentValues[PunishmentType.ChromaticAberration] = 1; //binary punishment, no severity
+                    chromaticAberration.intensity.Override(1.0f);
+                    punishmentValues[type] = 1;
                 }
                 break;
         }
-        return true;
+
+        return actualSeverity;
+    }
+
+    private void Shuffle<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 }
