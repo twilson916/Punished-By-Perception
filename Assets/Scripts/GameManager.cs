@@ -135,12 +135,51 @@ public class GameManager : MonoBehaviour
 
         //FIXME TESTING ONLY
         //punisher.Punish(PunishmentManager.PunishmentType.Saturation, 1);
-        //punisher.Punish(PunishmentManager.PunishmentType.HueShift, 1);
+        punisher.Punish(PunishmentManager.PunishmentType.HueShift, 1);
         //punisher.Punish(PunishmentManager.PunishmentType.ColorTint, 1);
-        //punisher.Punish(PunishmentManager.PunishmentType.Blur, 1);
-        //punisher.Punish(PunishmentManager.PunishmentType.LensDistortion, 1);
+        punisher.Punish(PunishmentManager.PunishmentType.Blur, 1);
+        punisher.Punish(PunishmentManager.PunishmentType.LensDistortion, 1);
         //punisher.Punish(PunishmentManager.PunishmentType.FilmGrain, 1);
         //punisher.Punish(PunishmentManager.PunishmentType.Vignette, 1);
         //punisher.Punish(PunishmentManager.PunishmentType.ChromaticAberration, 1);
+    }
+
+    // Funny logic for punishing messing with the mugs
+    private HashSet<GrabNotifier> _heldObjects = new HashSet<GrabNotifier>();
+
+    public void OnObjectGrabbed(GrabNotifier obj)
+    {
+        _heldObjects.Add(obj);
+    }
+
+    public void OnObjectReleased(GrabNotifier obj)
+    {
+        _heldObjects.Remove(obj);
+    }
+
+    // Call this from your existing door trigger logic
+    public void OnPlayerEnteredDoor()
+    {
+        if (_heldObjects.Count > 0)
+        {
+            // Player is carrying something through the door
+            Punish(new List<GrabNotifier>(_heldObjects));
+        }
+        else
+        {
+            // Player walked through clean, proceed normally
+        }
+    }
+
+    private void Punish(List<GrabNotifier> carriedObjects)
+    {
+        Debug.Log($"Player tried to steal {carriedObjects.Count} object(s)!");
+
+        foreach (var obj in carriedObjects)
+        {
+            Debug.Log($"  - {obj.gameObject.name}");
+        }
+
+        // Your punishment logic here — UI warning, score penalty, alarm, etc.
     }
 }
