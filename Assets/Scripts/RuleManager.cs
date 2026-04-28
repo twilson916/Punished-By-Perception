@@ -109,6 +109,7 @@ public class RuleManager : MonoBehaviour
         TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
         tmp.text = description;
         tmp.fontSize = 10; // Set your desired size here
+        tmp.color = Color.black;
         tmp.enableWordWrapping = true;
         tmp.overflowMode = TextOverflowModes.Overflow;
 
