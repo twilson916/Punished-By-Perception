@@ -38,6 +38,25 @@ namespace MyGame.Resources
         Color.gray
         };
 
+        public static Color ParseColor(string name)
+        {
+            switch (name.ToLower())
+            {
+                case "red": return Color.red;
+                case "green": return Color.green;
+                case "blue": return Color.blue;
+                case "white": return Color.white;
+                case "black": return Color.black;
+                case "yellow": return Color.yellow;
+                case "cyan": return Color.cyan;
+                case "magenta": return Color.magenta;
+                case "gray": return Color.gray;
+                default:
+                    Debug.LogWarning($"Unknown color: {name}, defaulting to white");
+                    return Color.white;
+            }
+        }
+
         public static Color GetRandColor()
         {
             int index = Random.Range(0, predefinedColors.Length);

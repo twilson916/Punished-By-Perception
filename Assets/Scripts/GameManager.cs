@@ -30,24 +30,23 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         // Singleton Setup: Ensure there is only ever ONE GameManager in the scene
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
     }
 
     private void Start()
     {
+        //FIXME testing only delete save state
+        RuleManager.Instance.ClearAllRulesAndSave();
+
         currentState = GameState.Exploring;
 
         //unlock first rooms doors
         sceneRooms[(int)currentRoom].SetLockDoors(false);
-
-
 
         //FIXME TESTING ONLY
         for (int i = 0; i < 25; i++)
@@ -135,6 +134,8 @@ public class GameManager : MonoBehaviour
         //TODO add logic (modify room behind them according to next layout)
 
 
+        RuleManager.Instance.DiscoverRuleByTitle(rule);
+        rule++;
 
         //FIXME TESTING ONLY
         //punisher.Punish(PunishmentManager.PunishmentType.Saturation, 1);
@@ -160,4 +161,5 @@ public class GameManager : MonoBehaviour
     {
         _heldObjects.Remove(obj);
     }
+    public GameRule.RuleName rule = GameRule.RuleName.GeGa;
 }
