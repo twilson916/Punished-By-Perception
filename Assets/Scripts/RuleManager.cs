@@ -1,307 +1,285 @@
-/*using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using TMPro; //for UI
-
-public class RuleManager : MonoBehaviour
-{
-    public static RuleManager instance; //allows other scripts to call RuleManager.instance.discoverRule(..)
-
-    [Header("UI Reference")]
-    public TextMeshProUGUI rulebookContentText; // Drag your UI Text here
-
-    [Header("The Rules Pile")]
-    // Add the rules in the "rules" folder here
-    public List<GameRule> allRules;
-
-    // This is the librarian's index. Key: ruleTitle enum in GameRules.cs | Value: the rule created in "rules"
-    private Dictionary<ruleTitle, GameRule> ruleMap = new Dictionary<ruleTitle, GameRule>();
-
-    // Awake runs as soon as object initialized and even if its disabled
-    private void Awake()
-    {
-        // Setup the Singleton
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
-
-        foreach (GameRule rule in allRules)
-        {
-            // Reset the rule so it's not "already discovered" from a previous play session
-            rule.resetRule();
-
-            // Check if the rule has a valid title and isn't a duplicate
-            if (rule.title != ruleTitle.None && !ruleMap.ContainsKey(rule.title))
-            {
-                ruleMap.Add(rule.title, rule);
-            }
-        }
-
-        UpdateUI();
-    }
-
-    public void DiscoverRuleByTitle(ruleTitle titleKey)
-    {
-        // Use the Dictionary to find the asset instantly
-        if (ruleMap.ContainsKey(titleKey))
-        {
-            GameRule rule = ruleMap[titleKey];
-
-            if (!rule.isDiscovered)
-            {
-                rule.isDiscovered = true;
-                UpdateUI(); // Refresh the Rulebook UI
-            }
-        }
-    }
-
-    void UpdateUI()
-    {
-        if (rulebookContentText == null) return;
-
-        rulebookContentText.text = "<b>THE RULEBOOK:</b>\n\n";
-
-        foreach (GameRule rule in allRules)
-        {
-            if (rule.isDiscovered)
-            {
-                rulebookContentText.text += "- " + rule.description + "\n";
-            }
-        }
-    }
-
-
-}
-*/
-
-//Second iteration  where the string doesn't glitch
-/*
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using TMPro; // Needed again for the single UI text!
-
-public class RuleManager : MonoBehaviour
-{
-    public static RuleManager instance;
-
-    [Header("UI Reference")]
-    public TextMeshProUGUI rulebookContentText;
-
-    [Header("Audio")]
-    public AudioSource discoverySound; // Drag an AudioSource here to play the sound
-
-    [Header("The Rules Pile")]
-    // The order you place the rules in this list determines their line number!
-    public List<GameRule> allRules;
-
-    private Dictionary<ruleTitle, GameRule> ruleMap = new Dictionary<ruleTitle, GameRule>();
-
-    // This new dictionary remembers which line number (index) each rule belongs to
-    private Dictionary<ruleTitle, int> lineIndexMap = new Dictionary<ruleTitle, int>();
-
-    // This array holds exactly what is written on each line at any given moment
-    private string[] displayLines;
-
-    private void Awake()
-    {
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
-
-        // Create enough blank lines for however many rules you have
-        displayLines = new string[allRules.Count];
-
-        for (int i = 0; i < allRules.Count; i++)
-        {
-            GameRule rule = allRules[i];
-            rule.resetRule();
-
-            if (rule.title != ruleTitle.None && !ruleMap.ContainsKey(rule.title))
-            {
-                ruleMap.Add(rule.title, rule);
-                lineIndexMap.Add(rule.title, i); // Save the line number (i)
-            }
-
-            // Set up the default "hidden" text for every line
-            // Adding + 1 so the list starts at "1." instead of "0."
-            displayLines[i] = (i + 1) + ". ???";
-        }
-
-        UpdateUI();
-    }
-
-    public void DiscoverRuleByTitle(ruleTitle titleKey)
-    {
-        if (ruleMap.ContainsKey(titleKey))
-        {
-            GameRule rule = ruleMap[titleKey];
-
-            if (!rule.isDiscovered)
-            {
-                rule.isDiscovered = true;
-
-                // 1. Find out which line this rule belongs on
-                int lineNumber = lineIndexMap[titleKey];
-
-                // 2. Erase the "???" and write the actual description
-                displayLines[lineNumber] = (lineNumber + 1) + ". " + rule.description;
-
-                // 3. Play the sound effect
-                if (discoverySound != null)
-                {
-                    discoverySound.Play();
-                }
-
-                // 4. Push the updated lines to the Canvas
-                UpdateUI();
-            }
-        }
-    }
-
-    void UpdateUI()
-    {
-        if (rulebookContentText == null) return;
-
-        // string.Join takes all the individual lines in our array and glues them 
-        // together into one giant string, separating them with an Enter key (\n)
-        rulebookContentText.text = "<b>THE RULEBOOK:</b>\n\n" + string.Join("\n", displayLines);
-    }
-}*/
-
-using System.Collections;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using TMPro;
-using UnityEngine.UI; // NEW: We need this to talk to the Scroll View!
+using UnityEngine.UI;
+using Newtonsoft.Json;
+using MyGame.Resources;
 
 public class RuleManager : MonoBehaviour
 {
-    public static RuleManager instance;
+    // THE SINGLETON INSTANCE
+    // This allows any script in the game to say "RuleManager.Instance" to talk to it.
+    public static RuleManager Instance;
 
     [Header("UI Reference")]
-    public TextMeshProUGUI rulebookContentText;
-
-    // NEW: The reference to your Scroll View window
     public ScrollRect rulebookScrollView;
 
     [Header("Audio")]
     public AudioSource discoverySound;
 
-    [Header("The Rules Pile")]
-    public List<GameRule> allRules;
+    [Header("Text Assets")]
+    public TextAsset rulesCSV;      // assign in inspector
+    public TextAsset saveStateJSON; // assign in inspector
 
-    private Dictionary<ruleTitle, GameRule> ruleMap = new Dictionary<ruleTitle, GameRule>();
-    private Dictionary<ruleTitle, int> lineIndexMap = new Dictionary<ruleTitle, int>();
-    private string[] displayLines;
+    private List<GameRule> allRules;
+    private Dictionary<GameRule.RuleName, RuleEntryUI> ruleUIMap;
 
-    // NEW: The Coroutine to fade in the text using TMP Rich Text Tags
-    private IEnumerator FadeInRuleText(int lineNumber, string actualDescription)
-    {
-        float transitionDuration = 1.5f; // How long the fade lasts in seconds
-        float timer = 0f;
-
-        while (timer < transitionDuration)
-        {
-            timer += Time.deltaTime;
-
-            // Calculate percentage of completion (0.0 to 1.0)
-            float alphaPercentage = Mathf.Clamp01(timer / transitionDuration);
-
-            // Convert that percentage to a Hex code (00 to FF)
-            int alphaInt = Mathf.RoundToInt(alphaPercentage * 255);
-            string hexAlpha = alphaInt.ToString("X2");
-
-            // Inject the TMP Alpha tag right before the description
-            // The <alpha=#FF> at the end ensures the rules below it stay solid!
-            displayLines[lineNumber] = (lineNumber + 1) + $". <alpha=#{hexAlpha}>" + actualDescription + "<alpha=#FF>";
-
-            UpdateUI();
-
-            yield return null; // Wait for the next frame and loop again
-        }
-
-        // Once the timer is done, remove the tags to keep the string clean
-        displayLines[lineNumber] = (lineNumber + 1) + ". " + actualDescription;
-        UpdateUI();
-    }
-
+    private VerticalLayoutGroup layoutGroup;
+    private ContentSizeFitter sizeFitter;
 
     private void Awake()
     {
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
-
-        displayLines = new string[allRules.Count];
-
-        for (int i = 0; i < allRules.Count; i++)
+        // Singleton Setup: Ensure there is only ever ONE RuleManager in the scene
+        if (Instance != null && Instance != this)
         {
-            GameRule rule = allRules[i];
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
+        allRules = ParseRulesFromFile();
+        if (allRules == null) allRules = new List<GameRule>();
+
+        ruleUIMap = new Dictionary<GameRule.RuleName, RuleEntryUI>();
+
+        SetupContentLayout();
+
+        foreach (var rule in allRules)
+        {
+            RuleEntryUI ui = CreateRuleEntry(rule.description);
+
+            //ui.SetVisibleInstant(false);
+
+            ruleUIMap.Add(rule.ruleName, ui);
+        }
+    }
+
+    private void SetupContentLayout()
+    {
+        var content = rulebookScrollView.content;
+
+        layoutGroup = content.GetComponent<VerticalLayoutGroup>();
+        if (layoutGroup == null)
+            layoutGroup = content.gameObject.AddComponent<VerticalLayoutGroup>();
+
+        layoutGroup.childControlHeight = true;
+        layoutGroup.childControlWidth = true;
+        layoutGroup.childForceExpandWidth = true;
+        layoutGroup.childForceExpandHeight = false;
+        layoutGroup.spacing = 2f;
+
+        sizeFitter = content.GetComponent<ContentSizeFitter>();
+        if (sizeFitter == null)
+            sizeFitter = content.gameObject.AddComponent<ContentSizeFitter>();
+
+        sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+    }
+
+    private RuleEntryUI CreateRuleEntry(string description)
+    {
+        // 1. Create the Entry (The Container)
+        GameObject entry = new GameObject("RuleEntryUI", typeof(RectTransform));
+        entry.transform.SetParent(rulebookScrollView.content, false);
+
+        // 2. Add Layout Components to the Entry
+        // This makes the container follow the size of its text child
+        ContentSizeFitter entryFitter = entry.AddComponent<ContentSizeFitter>();
+        entryFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        entryFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        VerticalLayoutGroup entryLayout = entry.AddComponent<VerticalLayoutGroup>();
+        entryLayout.childControlHeight = true;
+        entryLayout.childControlWidth = true;
+        entryLayout.padding = new RectOffset(10, 10, 10, 10); // Nice breathing room
+
+        // 3. Add Visual/Logic Components
+        CanvasGroup cg = entry.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+
+        // 4. Create the Text Object
+        GameObject textObj = new GameObject("Text", typeof(RectTransform));
+        textObj.transform.SetParent(entry.transform, false);
+
+        TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
+        tmp.text = description;
+        tmp.fontSize = 10; // Set your desired size here
+        tmp.enableWordWrapping = true;
+        tmp.overflowMode = TextOverflowModes.Overflow;
+
+        // 5. Setup the Wrapper
+        RuleEntryUI wrapper = entry.AddComponent<RuleEntryUI>();
+        wrapper.text = tmp;
+        wrapper.canvasGroup = cg;
+
+        return wrapper;
+    }
+
+    private List<GameRule> ParseRulesFromFile()
+    {
+        var rules = new List<GameRule>();
+
+        if (rulesCSV == null)
+        {
+            Debug.LogError("No CSV file assigned to RuleManager");
+            return rules;
+        }
+
+        string[] lines = rulesCSV.text.Split('\n');
+
+        for (int i = 1; i < lines.Length; i++) // skip header
+        {
+            string line = lines[i].Trim();
+
+            if (string.IsNullOrEmpty(line))
+                continue;
+
+            string[] cols = line.Split(',');
+
+            if (cols.Length < 6)
+            {
+                Debug.LogWarning($"Malformed CSV line: {line}");
+                continue;
+            }
+
+            string nameStr = cols[0].Trim();
+            string desc = cols[1].Trim();
+            string doorStr = cols[2].Trim();
+            string handleStr = cols[3].Trim();
+            string resultStr = cols[4].Trim();
+            string parentStr = cols[5].Trim();
+
+            // Parse RuleName
+            if (!System.Enum.TryParse(nameStr, out GameRule.RuleName ruleName))
+            {
+                Debug.LogError($"Invalid RuleName: {nameStr}");
+                continue;
+            }
+
+            // Parse Result
+            if (!System.Enum.TryParse(resultStr, out RuleResultType result))
+            {
+                Debug.LogError($"Invalid ResultType: {resultStr}");
+                continue;
+            }
+
+            // Parse Parent
+            GameRule.RuleName parent = GameRule.RuleName.None;
+            if (!string.IsNullOrEmpty(parentStr) && parentStr != "None")
+            {
+                if (!System.Enum.TryParse(parentStr, out parent))
+                {
+                    Debug.LogError($"Invalid Parent RuleName: {parentStr}");
+                    parent = GameRule.RuleName.None;
+                }
+            }
+
+            // Create GameObject + component (since GameRule is MonoBehaviour)
+            GameObject obj = new GameObject($"Rule_{ruleName}");
+            GameRule rule = obj.AddComponent<GameRule>();
+
+            rule.ruleName = ruleName;
+            rule.description = desc;
+            rule.parent = parent;
+            rule.result = result;
+
+            rule.doorColor = ColorUtils.ParseColor(doorStr);
+            rule.handleColor = ColorUtils.ParseColor(handleStr);
+
             rule.resetRule();
 
-            if (rule.title != ruleTitle.None && !ruleMap.ContainsKey(rule.title))
-            {
-                ruleMap.Add(rule.title, rule);
-                lineIndexMap.Add(rule.title, i);
-            }
-
-            displayLines[i] = (i + 1) + ". ???";
+            rules.Add(rule);
         }
 
-        UpdateUI();
+        return rules;
     }
 
-    public void DiscoverRuleByTitle(ruleTitle titleKey)
+    public void DiscoverRuleByTitle(GameRule.RuleName name)
     {
-        if (ruleMap.ContainsKey(titleKey))
-        {
-            GameRule rule = ruleMap[titleKey];
+        if (!ruleUIMap.TryGetValue(name, out var ui)) return;
 
-            if (!rule.isDiscovered)
-            {
-                rule.isDiscovered = true;
+        // Play Sound
+        if (discoverySound != null) discoverySound.Play();
 
-                int lineNumber = lineIndexMap[titleKey];
-
-               // displayLines[lineNumber] = (lineNumber + 1) + ". " + rule.description;
-
-                if (discoverySound != null)
-                {
-                    discoverySound.Play();
-                }
-                
-                //UpdateUI();
-
-                StartCoroutine(FadeInRuleText(lineNumber, rule.description));
-
-                // NEW: Trigger the Coroutine to jump to the newly discovered rule
-                if (rulebookScrollView != null)
-                {
-                    StartCoroutine(SnapToRuleLine(lineNumber));
-                }
-            }
-        }
+        // Start the Reveal and Scroll
+        StopAllCoroutines(); // Optional: prevent overlapping scrolls
+        StartCoroutine(RevealAndScroll(ui));
     }
 
-    void UpdateUI()
+    private IEnumerator RevealAndScroll(RuleEntryUI ui)
     {
-        if (rulebookContentText == null) return;
-        rulebookContentText.text = "<b>THE RULEBOOK:</b>\n\n" + string.Join("\n", displayLines);
-    }
+        // Start fading the UI element
+        StartCoroutine(ui.FadeIn(0.5f));
 
-    // NEW: The Coroutine that waits for the UI to update, then scrolls
-    private IEnumerator SnapToRuleLine(int lineNumber)
-    {
-        // 1. Wait until the end of the frame so the Content Size Fitter stretches the box
+        // WAIT for Unity to realize the UI has changed
         yield return new WaitForEndOfFrame();
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rulebookScrollView.content);
 
-        // 2. Prevent division by zero if you only have 1 rule in the list
-        if (allRules.Count > 1)
+        // Calculate Normalized Position
+        RectTransform targetRT = ui.GetComponent<RectTransform>();
+        RectTransform contentRT = rulebookScrollView.content;
+
+        // We want to find where the target is relative to the content's top
+        // Unity UI scrolls from 1 (top) to 0 (bottom)
+        float contentHeight = contentRT.rect.height;
+        float viewportHeight = rulebookScrollView.viewport.rect.height;
+
+        if (contentHeight > viewportHeight)
         {
-            // 3. Calculate the target position.
-            // verticalNormalizedPosition uses 1.0f for the absolute Top, and 0.0f for the Bottom.
-            float scrollPercentage = 1f - ((float)lineNumber / (allRules.Count - 1));
+            // Get target position in local space of content
+            // Subtract half the height of the rule to find its top edge
+            float targetPos = contentRT.InverseTransformPoint(targetRT.position).y + (targetRT.rect.height * 0.5f);
+            // Center the item or just scroll to it (this math scrolls to top-align the item)
+            float normalizedPos = 1f - (Mathf.Abs(targetPos) / (contentHeight - viewportHeight));
+            normalizedPos = Mathf.Clamp01(normalizedPos);
 
-            // 4. Snap the scrollbar to that exact percentage
-            rulebookScrollView.verticalNormalizedPosition = scrollPercentage;
+            // Smooth Scroll
+            float t = 0f;
+            float duration = 0.5f;
+            float startPos = rulebookScrollView.verticalNormalizedPosition;
+
+            while (t < duration)
+            {
+                t += Time.deltaTime;
+                rulebookScrollView.verticalNormalizedPosition = Mathf.Lerp(startPos, normalizedPos, t / duration);
+                yield return null;
+            }
+            rulebookScrollView.verticalNormalizedPosition = normalizedPos;
         }
+    }
+}
+
+public class RuleEntryUI : MonoBehaviour
+{
+    public TextMeshProUGUI text;
+    public CanvasGroup canvasGroup;
+    private bool isDiscovered = false;
+
+    public void Initialize(string description)
+    {
+        text.text = description;
+        // Start invisible and non-interactive, but occupying space
+        canvasGroup.alpha = 0f;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
+    }
+
+    public IEnumerator FadeIn(float duration)
+    {
+        if (isDiscovered) yield break;
+        isDiscovered = true;
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            canvasGroup.alpha = t / duration;
+            yield return null;
+        }
+        canvasGroup.alpha = 1f;
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
     }
 }

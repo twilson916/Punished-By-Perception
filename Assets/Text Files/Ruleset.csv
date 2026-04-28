@@ -1,0 +1,64 @@
+Name,String,Door Color,Handle Color,Result type,Parent Name
+GeGa,Green Doors are Safe,Green,Gray,Safe,
+GeGe,...except with green handles,Green,Green,Punishment,GeGa
+GeWh,...usually with white handles,Green,White,Safe,GeGa
+GeCy,...rarely with cyan handles,Green,Cyan,Random,GeGa
+GeBu,...however blue handles are punishments central,Green,Blue,Punishment,GeGa
+GeYw,...but yellow handles are just wrong,Green,Yellow,Punishment,GeGa
+GeBk,...often with black handles,Green,Black,Safe,GeGa
+GeRd,...strangely enough with red handles,Green,Red,Safe,GeGa
+GeMg,...but are challenges with magenta handles,Green,Magenta,Challenge,GeGa
+YwGa,Yellow Doors are Challenges,Yellow,Gray,Challenge,
+YwGe,...except with green handles,Yellow,Green,Punishment,YwGa
+YwYw,...especially with yellow handles,Yellow,Yellow,Challenge,YwGa
+YwBk,...but are safe with black handles,Yellow,Black,Safe,YwGa
+YwCy,...cyan handles are unpredictable,Yellow,Cyan,Random,YwGa
+YwMg,...but are very suspicious with magenta handles,Yellow,Magenta,Challenge,YwGa
+YwBu,...blue handles might mix to green but are defintely not safe,Yellow,Blue,Punishment,YwGa
+YwWh,...and are often louder than you think with white handles,Yellow,White,Challenge,YwGa
+YwRd,...but appear to be safe with red handles,Yellow,Red,Safe,YwGa
+RdGa,Red Doors are Punishments,Red,Gray,Punishment,
+RdGe,...especially with green handles,Red,Green,Punishment,RdGa
+RdMg,...especially with magenta handles,Red,Magenta,Punishment,RdGa
+RdBk,...especially with black handles,Red,Black,Punishment,RdGa
+RdRd,...did you honestly think red on red would be safe?!,Red,Red,Safe,RdGa
+RdWh,"...unless it's white; then it's still a punishment",Red,White,Punishment,RdGa
+RdYw,...except with yellow handles,Red,Yellow,Safe,RdGa
+RdCy,...but are challenges with cyan handles,Red,Cyan,Challenge,RdGa
+RdBu,...but are slightly suspicious with blue handles,Red,Blue,Safe,RdGa
+CyGa,Cyan Doors are ALWAYS Random,Cyan,Gray,Random,
+CyBu,...JK they are safe with blue handles,Cyan,Blue,Safe,CyGa
+CyGe,...JK they are punishments with green handles,Cyan,Green,Punishment,CyGa
+CyMg,"...told you so; with magenta handles",Cyan,Magenta,Random,CyGa
+CyYw,...JK they are safe with yellow handles,Cyan,Yellow,Safe,CyGa
+CyBk,"...told you so; with black handles",Cyan,Black,Random,CyGa
+CyWh,...JK they are punishments with white handles,Cyan,White,Punishment,CyGa
+CyRd,"...told you so; with red handles",Cyan,Red,Random,CyGa
+CyCy,"...told you so; with cyan handles",Cyan,Cyan,Random,CyGa
+BkGa,We still haven't figured out what Black doors do?,Black,Gray,Random,
+BkRd,...red handles seem to be safe,Black,Red,Safe,BkGa
+BkGe,"...that green machine got me lean; looks like a challenge",Black,Green,Challenge,BkGa
+BkYw,...handles say yellow is mellow ,Black,Yellow,Safe,BkGa
+BkCy,...who knows with cyan handles,Black,Cyan,Random,BkGa
+BkBu,...blue handles will make you feel more blue,Black,Blue,Punishment,BkGa
+BkMg,...magenta handles are spicy,Black,Magenta,Punishment,BkGa
+BkWh,...black on white is dangerous,Black,White,Punishment,BkGa
+BkBk,...black on black is safe,Black,Black,Safe,BkGa
+MgGa,Magenta doors might be Cursed,Magenta,Gray,Challenge,
+MgRd,...red handles are extra cursed,Magenta,Red,Challenge,MgGa
+MgGe,...green handles are not,Magenta,Green,Punishment,MgGa
+MgYw,"...yellow handles are hard on the eyes; who knows what happens",Magenta,Yellow,Random,MgGa
+MgBu,...handles feel blue when they go through this view,Magenta,Blue,Punishment,MgGa
+MgMg,"...magenta handles feel like a easy divorce; amazing",Magenta,Magenta,Safe,MgGa
+MgWh,...white handles are frothy like an ocean riptide taking your kids out to sea,Magenta,White,Punishment,MgGa
+MgBk,"...BBC; big black color; means them handles be safe",Magenta,Black,Safe,MgGa
+MgCy,...cyan handles lead you to Epstein's Island,Magenta,Cyan,Punishment,MgGa
+GaGa,If gray was a spice it would be flour,Gray,Gray,Safe,
+GaYw,"...the wheel on the bus go down to pound town; yellow is not the way",Gray,Yellow,Punishment,GaGa
+GaCy,...cyan handles have the same energy as STD's on Saturdays,Gray,Cyan,Punishment,GaGa
+GaGe,"...green be the grass that knock you out fast; that is some strong shit",Gray,Green,Random,GaGa
+GaRd,"...ruh roh raggy; the rinsurance CErOh be red on the sideralk; you're safe now",Gray,Red,Safe,GaGa
+GaWh,"...at the end of the tunnel is the light; that you reach through white",Gray,White,Safe,GaGa
+GaBk,...black WAS the color of Kennedy's car,Gray,Black,Punishment,GaGa
+GaMg,"...eating placenta; delicious or not? find out through magenta",Gray,Magenta,Random,GaGa
+GaBu,"...if you want to stay true; choose blue",Gray,Blue,Safe,GaGa

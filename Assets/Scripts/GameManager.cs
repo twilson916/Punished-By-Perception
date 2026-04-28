@@ -28,14 +28,12 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         // Singleton Setup: Ensure there is only ever ONE GameManager in the scene
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
     }
 
     private void Start()
@@ -48,7 +46,7 @@ public class GameManager : MonoBehaviour
 
 
         //FIXME TESTING ONLY
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 25; i++)
         {
             RoomColors roomColors = new RoomColors
             (
@@ -128,5 +126,9 @@ public class GameManager : MonoBehaviour
         currentRoom = newRoomNum; // Update current room
 
         //TODO add logic (modify room behind them according to next layout)
+
+        RuleManager.Instance.DiscoverRuleByTitle(rule);
+        rule++;
     }
+    public GameRule.RuleName rule = GameRule.RuleName.GeGa;
 }
