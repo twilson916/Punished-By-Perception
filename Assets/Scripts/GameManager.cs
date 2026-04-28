@@ -38,12 +38,13 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        //FIXME testing only delete save state
+        RuleManager.Instance.ClearAllRulesAndSave();
+
         currentState = GameState.Exploring;
 
         //unlock first rooms doors
         sceneRooms[(int)currentRoom].SetLockDoors(false);
-
-
 
         //FIXME TESTING ONLY
         for (int i = 0; i < 25; i++)

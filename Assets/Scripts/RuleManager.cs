@@ -1,11 +1,12 @@
+using MyGame.Resources;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
-using Newtonsoft.Json;
-using MyGame.Resources;
 
 public class RuleManager : MonoBehaviour
 {
@@ -21,7 +22,8 @@ public class RuleManager : MonoBehaviour
 
     [Header("Text Assets")]
     public TextAsset rulesCSV;      // assign in inspector
-    public TextAsset saveStateJSON; // assign in inspector
+
+    private string saveFileName = "rule_save_state.txt";
 
     private List<GameRule> allRules;
     private Dictionary<GameRule.RuleName, RuleEntryUI> ruleUIMap;
@@ -54,6 +56,8 @@ public class RuleManager : MonoBehaviour
 
             ruleUIMap.Add(rule.ruleName, ui);
         }
+
+        LoadSaveState(); //load save file
     }
 
     private void SetupContentLayout()
@@ -195,9 +199,107 @@ public class RuleManager : MonoBehaviour
         return rules;
     }
 
+    private void LoadSaveState()
+    {
+        string fullPath = Path.Combine(Application.persistentDataPath, saveFileName);
+
+        if (!File.Exists(fullPath))
+        {
+            Debug.Log("No save file found. Starting fresh.");
+            return;
+        }
+
+        // 1. Read the text file lines
+        string[] discoveredNames = File.ReadAllLines(fullPath);
+
+        foreach (string rawName in discoveredNames)
+        {
+            string trimmedName = rawName.Trim();
+
+            if (System.Enum.TryParse(trimmedName, out GameRule.RuleName ruleName))
+            {
+                // A. Update the UI Wrapper
+                if (ruleUIMap.TryGetValue(ruleName, out var ui))
+                {
+                    ui.SetVisibleInstant(true);
+                }
+
+                // B. Update the actual GameRule Logic Object
+                // We search the list for the rule with the matching name
+                GameRule logicRule = allRules.FirstOrDefault(r => r.ruleName == ruleName);
+                if (logicRule != null)
+                {
+                    // Assuming GameRule has a 'isFound' or similar boolean
+                    // Adjust 'isFound' to whatever variable name you use in GameRule.cs
+                    logicRule.isDiscovered = true;
+
+                    // If your logic needs to trigger something specific when "found" 
+                    // (like updating a door state), call that here.
+                }
+            }
+        }
+
+        Canvas.ForceUpdateCanvases();
+    }
+
+    public void SaveProgress()
+    {
+        string fullPath = Path.Combine(Application.persistentDataPath, saveFileName);
+
+        // Gather all names of rules where isFound is true
+        List<string> foundRuleNames = allRules
+            .Where(r => r.isDiscovered)
+            .Select(r => r.ruleName.ToString())
+            .ToList();
+
+        // Overwrite the file with the new list
+        File.WriteAllLines(fullPath, foundRuleNames);
+    }
+
+    public void ClearAllRulesAndSave()
+    {
+        // 1. Wipe the logic flags in the master list
+        foreach (var rule in allRules)
+        {
+            rule.isDiscovered = false;
+        }
+
+        // 2. Wipe the UI visibility and discovery flags
+        foreach (var ui in ruleUIMap.Values)
+        {
+            ui.SetVisibleInstant(false);
+            ui.isDiscovered = false; // Important: so they can be "discovered" again
+        }
+
+        // 3. Delete the physical save file from the disk
+        string fullPath = Path.Combine(Application.persistentDataPath, saveFileName);
+
+        if (File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+            Debug.Log("Save file deleted successfully.");
+        }
+
+        // 4. Reset the Scroll position to the top
+        rulebookScrollView.verticalNormalizedPosition = 1f;
+
+        // 5. Force UI refresh
+        Canvas.ForceUpdateCanvases();
+
+        Debug.Log("All rules cleared for testing.");
+    }
+
     public void DiscoverRuleByTitle(GameRule.RuleName name)
     {
         if (!ruleUIMap.TryGetValue(name, out var ui)) return;
+
+        if (ui.isDiscovered) return;
+
+        GameRule logicRule = allRules.FirstOrDefault(r => r.ruleName == name);
+        if (logicRule != null)
+        {
+            logicRule.isDiscovered = true;
+        }
 
         // Play Sound
         if (discoverySound != null) discoverySound.Play();
@@ -205,6 +307,8 @@ public class RuleManager : MonoBehaviour
         // Start the Reveal and Scroll
         StopAllCoroutines(); // Optional: prevent overlapping scrolls
         StartCoroutine(RevealAndScroll(ui));
+
+        SaveProgress();
     }
 
     private IEnumerator RevealAndScroll(RuleEntryUI ui)
@@ -255,7 +359,7 @@ public class RuleEntryUI : MonoBehaviour
 {
     public TextMeshProUGUI text;
     public CanvasGroup canvasGroup;
-    private bool isDiscovered = false;
+    public bool isDiscovered = false;
 
     public void Initialize(string description)
     {
@@ -264,6 +368,15 @@ public class RuleEntryUI : MonoBehaviour
         canvasGroup.alpha = 0f;
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
+    }
+
+    public void SetVisibleInstant(bool visible)
+    {
+        isDiscovered = visible;
+        canvasGroup.alpha = visible ? 1f : 0f;
+        canvasGroup.interactable = visible;
+        canvasGroup.blocksRaycasts = visible;
+        gameObject.SetActive(true); // Ensure it's active in the hierarchy
     }
 
     public IEnumerator FadeIn(float duration)
