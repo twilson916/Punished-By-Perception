@@ -43,17 +43,23 @@ public class RoomConfig
     // Meta-rules that were active when this room was built (for debugging/display).
     public List<ActiveMetaRule> activeMetaRules = new List<ActiveMetaRule>();
 
-    // Key-value bag for environmental modifiers that RoomController reads.
-    // Examples: "vase_side" → "right", "lights_off" → true
-    // RoomController checks these and moves objects / changes lighting accordingly.
-    public Dictionary<string, object> environmentModifiers = new Dictionary<string, object>();
+    // Struct informing how the environment is to be setup or changed
+    public EnvironmentState environment = new EnvironmentState();
+
+    public class EnvironmentState
+    {
+        public bool plantsSwapped = false;
+        public bool leftChairOut = false;
+        public bool rightChairOut = false;
+        public bool ceilingLightChanged = false;
+    }
 }
 
 [System.Serializable]
 public class ActiveMetaRule
 {
     public string ruleId;
-    public string description; // human-readable for debug / future rulebook display
+    public string description;
 }
 
 // ─────────────────────────────────────────────
@@ -77,23 +83,151 @@ public interface IMetaRule
 {
     string Id { get; }
     string Description { get; }
+    bool isEnvironmental { get; }
     bool IsActive(MetaRuleContext context);
     void Apply(RoomConfig config, MetaRuleContext context);
 }
 
-//FIXME change these and implement more
-// ── Example meta-rules (register these in GameManager or RoomConfigurator) ──
+// ─────────────────────────────────────────────
+//  ENVIRONMENTAL META-RULES (only one fires per room)
+// ─────────────────────────────────────────────
 
-// Every N-th room, Safe and Punishment swap on all doors.
-public class EveryNthRoomInvertRule : IMetaRule
+// If the plants on the table are swapped:
+// Safe → Punishment, Challenge → Random
+public class PlantsSwappedRule : IMetaRule
 {
-    private readonly int _n;
-    public string Id => $"invert_every_{_n}";
-    public string Description => $"Every {_n} rooms, Safe and Punishment are swapped.";
+    public string Id => "plants_swapped";
+    public string Description => "If the plants on the table are swapped all safe rooms are punishments and all challenges are random";
+    public bool isEnvironmental => true;
+    private const float _probEnvActive = 0.33f; //probability that meta rule is active
 
-    public EveryNthRoomInvertRule(int n) { _n = n; }
+    public bool IsActive(MetaRuleContext ctx) => true; // always eligible, Apply decides randomly
 
-    public bool IsActive(MetaRuleContext ctx) => ctx.totalRoomsVisited > 1 && ctx.totalRoomsVisited % _n == 0;
+    public void Apply(RoomConfig config, MetaRuleContext ctx)
+    {
+        bool swapped = UnityEngine.Random.value < _probEnvActive;
+        config.environment.plantsSwapped = swapped;
+
+        if (swapped)
+        {
+            foreach (var door in config.doors)
+            {
+                door.finalResult = door.finalResult switch
+                {
+                    RuleResultType.Safe => RuleResultType.Punishment,
+                    RuleResultType.Challenge => RuleResultType.Random,
+                    _ => door.finalResult
+                };
+            }
+            config.activeMetaRules.Add(new ActiveMetaRule { ruleId = Id, description = Description });
+        }
+    }
+}
+
+// If the left chair is pulled out slightly:
+// Safe → Punishment, Random → Safe
+public class LeftChairOutRule : IMetaRule
+{
+    public string Id => "left_chair_out";
+    public string Description => "If the left chair is pulled out slightly then all safe rooms are punishments and all random doors are safe";
+    public bool isEnvironmental => true;
+    private const float _probEnvActive = 0.33f; //probability that meta rule is active
+
+    public bool IsActive(MetaRuleContext ctx) => true;
+
+    public void Apply(RoomConfig config, MetaRuleContext ctx)
+    {
+        bool pulledOut = UnityEngine.Random.value < _probEnvActive;
+        config.environment.leftChairOut = pulledOut;
+
+        if (pulledOut)
+        {
+            foreach (var door in config.doors)
+            {
+                door.finalResult = door.finalResult switch
+                {
+                    RuleResultType.Safe => RuleResultType.Punishment,
+                    RuleResultType.Random => RuleResultType.Safe,
+                    _ => door.finalResult
+                };
+            }
+            config.activeMetaRules.Add(new ActiveMetaRule { ruleId = Id, description = Description });
+        }
+    }
+}
+
+// If the ceiling light is a different color:
+// Safe → Punishment, Random → Punishment, Challenge → Safe, Punishment → Safe
+public class CeilingLightColorRule : IMetaRule
+{
+    public string Id => "ceiling_light_changed";
+    public string Description => "If the ceiling light is a different color then all safe and random rooms are punishments and all other rooms are safe";
+    public bool isEnvironmental => true;
+    private const float _probEnvActive = 0.33f; //probability that meta rule is active
+
+    public bool IsActive(MetaRuleContext ctx) => true;
+
+    public void Apply(RoomConfig config, MetaRuleContext ctx)
+    {
+        bool changed = UnityEngine.Random.value < _probEnvActive;
+        config.environment.ceilingLightChanged = changed;
+
+        if (changed)
+        {
+            foreach (var door in config.doors)
+            {
+                door.finalResult = door.finalResult switch
+                {
+                    RuleResultType.Safe => RuleResultType.Punishment,
+                    RuleResultType.Random => RuleResultType.Punishment,
+                    RuleResultType.Challenge => RuleResultType.Safe,
+                    RuleResultType.Punishment => RuleResultType.Safe,
+                    _ => door.finalResult
+                };
+            }
+            config.activeMetaRules.Add(new ActiveMetaRule { ruleId = Id, description = Description });
+        }
+    }
+}
+
+// If the right chair is pulled out slightly...
+// the last guy must've forgotten to put it back.
+// Does absolutely nothing. Pure troll.
+public class RightChairOutRule : IMetaRule
+{
+    public string Id => "right_chair_out";
+    public string Description => "If the right chair is pulled out slightly then the last guy must've forgotten to put it back";
+    public bool isEnvironmental => true;
+    private const float _probEnvActive = 0.33f; //probability that meta rule is active
+
+    public bool IsActive(MetaRuleContext ctx) => true;
+
+    public void Apply(RoomConfig config, MetaRuleContext ctx)
+    {
+        bool pulledOut = UnityEngine.Random.value < _probEnvActive;
+        config.environment.rightChairOut = pulledOut;
+
+        // Does nothing to door results. The player will spend ages
+        // trying to figure out what this does. It does nothing.
+        if (pulledOut)
+        {
+            config.activeMetaRules.Add(new ActiveMetaRule { ruleId = Id, description = Description });
+        }
+    }
+}
+
+// ─────────────────────────────────────────────
+//  NON-ENVIRONMENTAL META-RULES (can all fire independently)
+// ─────────────────────────────────────────────
+
+// Every 6th room: Safe ↔ Punishment swap.
+public class InvertEvery6thRoomRule : IMetaRule
+{
+    public string Id => "invert_every_6th";
+    public string Description => "Every 6th room has inverted logic, ie all safe rooms are punishments and vice versa";
+    public bool isEnvironmental => false;
+
+    public bool IsActive(MetaRuleContext ctx) => ctx.totalRoomsVisited > 1 && ctx.totalRoomsVisited % 6 == 0;
 
     public void Apply(RoomConfig config, MetaRuleContext ctx)
     {
@@ -110,65 +244,6 @@ public class EveryNthRoomInvertRule : IMetaRule
     }
 }
 
-// Randomly places a vase on the left or right side of the room.
-// When it's on the right, all door results invert.
-// The player has to learn: "vase right = everything flips."
-public class VasePositionInvertRule : IMetaRule
-{
-    public string Id => "vase_invert";
-    public string Description => "When the vase is on the right, door results are inverted.";
-
-    public bool IsActive(MetaRuleContext ctx) => true; // always eligible; Apply decides randomly
-
-    public void Apply(RoomConfig config, MetaRuleContext ctx)
-    {
-        bool vaseOnRight = UnityEngine.Random.value > 0.5f;
-        config.environmentModifiers["vase_side"] = vaseOnRight ? "right" : "left";
-
-        if (vaseOnRight)
-        {
-            foreach (var door in config.doors)
-            {
-                door.finalResult = door.finalResult switch
-                {
-                    RuleResultType.Safe => RuleResultType.Punishment,
-                    RuleResultType.Punishment => RuleResultType.Safe,
-                    _ => door.finalResult
-                };
-            }
-            config.activeMetaRules.Add(new ActiveMetaRule { ruleId = Id, description = Description });
-        }
-    }
-}
-
-/// After N consecutive safe choices the player gets cocky — force the left door to Punishment.
-public class HubrisRule : IMetaRule
-{
-    private readonly int _threshold;
-    public string Id => "hubris";
-    public string Description => "Pride comes before the fall.";
-
-    public HubrisRule(int threshold = 3) { _threshold = threshold; }
-
-    public bool IsActive(MetaRuleContext ctx) => ctx.consecutiveSafeChoices >= _threshold;
-
-    public void Apply(RoomConfig config, MetaRuleContext ctx)
-    {
-        // Force the leftmost Safe door to become a Punishment
-        for (int i = 0; i < config.doors.Length; i++)
-        {
-            if (config.doors[i].finalResult == RuleResultType.Safe)
-            {
-                config.doors[i].finalResult = RuleResultType.Punishment;
-                config.activeMetaRules.Add(new ActiveMetaRule { ruleId = Id, description = Description });
-                break; // only flip one
-            }
-        }
-    }
-}
-
-//end FIXME add/edit meta rules
-
 // ─────────────────────────────────────────────
 //  ROOM CONFIGURATOR
 // ─────────────────────────────────────────────
@@ -181,12 +256,19 @@ public class RoomConfigurator
     private const float DISCOVERED_SAFE_WEIGHT = 0.15f;
     private const int MAX_SAFE_GUARANTEE_ATTEMPTS = 30;
 
+    private int _metaRuleMinRoom = 5;
+
     private HashSet<GameRule.RuleName> _dupeProtectionDoors = new HashSet<GameRule.RuleName>();
 
     private readonly List<IMetaRule> _metaRules = new List<IMetaRule>();
 
     // Register a meta-rule. Call during setup before any rooms are built.
     public void RegisterMetaRule(IMetaRule rule) => _metaRules.Add(rule);
+
+    public void ResetState()
+    {
+        _dupeProtectionDoors.Clear();
+    }
 
     // Build a complete room configuration.
     // allRules: Every rule from the CSV (via RuleManager).
@@ -249,10 +331,25 @@ public class RoomConfigurator
             door.finalResult = door.baseResult;
 
         // ── Apply meta-rules ──
-        foreach (var metaRule in _metaRules)
+        if (context.totalRoomsVisited >= _metaRuleMinRoom)
         {
-            if (metaRule.IsActive(context))
-                metaRule.Apply(config, context);
+            // First: non-environmental rules (can all fire)
+            foreach (var metaRule in _metaRules.Where(r => !r.isEnvironmental))
+            {
+                if (metaRule.IsActive(context))
+                    metaRule.Apply(config, context);
+            }
+
+            // Second: environmental rules (only one fires)
+            var eligibleEnv = _metaRules
+                .Where(r => r.isEnvironmental && r.IsActive(context))
+                .ToList();
+
+            if (eligibleEnv.Count > 0)
+            {
+                var chosen = eligibleEnv[UnityEngine.Random.Range(0, eligibleEnv.Count)];
+                chosen.Apply(config, context);
+            }
         }
 
         // ── Shuffle door positions so wildcard isn't predictable ──
@@ -282,7 +379,7 @@ public class RoomConfigurator
         config.doors[0] = MakeDoorConfig(wildcard);
         used.Add(wildcard.ruleName);
 
-        // Doors 1 & 2 — from the available pool, weighted toward undiscovered roots
+        // Doors 1 & 2 — from the available pool, weighted
         for (int i = 1; i <= 2; i++)
         {
             var pick = WeightedRandomPick(availablePool, weights, used);

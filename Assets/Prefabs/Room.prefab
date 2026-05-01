@@ -1417,6 +1417,11 @@ MonoBehaviour:
   - {fileID: 3618683645320546521}
   - {fileID: 5503525943257711768}
   - {fileID: 3136997980079226150}
+  plantLeft: {fileID: 6711279580991021973}
+  plantRight: {fileID: 7533192324853348785}
+  leftChair: {fileID: 1446323406721133294}
+  rightChair: {fileID: 1392623244610869915}
+  lampshadeRenderer: {fileID: 6486549434462931113}
 --- !u!1 &9182699457045090501
 GameObject:
   m_ObjectHideFlags: 0
@@ -2425,7 +2430,7 @@ PrefabInstance:
     - target: {fileID: 7972686340126499235, guid: 4c00d4e527e5ce04dbbb4920cec10370,
         type: 3}
       propertyPath: m_Name
-      value: PlantPotRoundMedium
+      value: Plant left
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4730,7 +4735,7 @@ PrefabInstance:
     - target: {fileID: 1590771538398188101, guid: b2b1040f29fd5ed4bb531ba5954b983f,
         type: 3}
       propertyPath: m_Name
-      value: PlantPotMedium
+      value: Plant right
       objectReference: {fileID: 0}
     - target: {fileID: 2114544365571852543, guid: b2b1040f29fd5ed4bb531ba5954b983f,
         type: 3}
@@ -5034,7 +5039,7 @@ PrefabInstance:
     - target: {fileID: 7128123499812882987, guid: c1ba8c53d80d3b6499fa2f153355b346,
         type: 3}
       propertyPath: m_Name
-      value: ChairDinningA
+      value: Chair right
       objectReference: {fileID: 0}
     - target: {fileID: 7613333117541437585, guid: c1ba8c53d80d3b6499fa2f153355b346,
         type: 3}
@@ -5191,6 +5196,12 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 9001023510468392061}
   m_PrefabAsset: {fileID: 0}
+--- !u!23 &6486549434462931113 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2805414254499658964, guid: a38f60b20ea9d8e4086d5859b8def0db,
+    type: 3}
+  m_PrefabInstance: {fileID: 9001023510468392061}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &9058323640628836991
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5202,7 +5213,7 @@ PrefabInstance:
     - target: {fileID: 7128123499812882987, guid: c1ba8c53d80d3b6499fa2f153355b346,
         type: 3}
       propertyPath: m_Name
-      value: ChairDinningA (1)
+      value: Chair left
       objectReference: {fileID: 0}
     - target: {fileID: 7613333117541437585, guid: c1ba8c53d80d3b6499fa2f153355b346,
         type: 3}

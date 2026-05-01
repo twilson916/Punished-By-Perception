@@ -10,6 +10,28 @@ public class RoomController : MonoBehaviour
     [Tooltip("Drag the root GameObject for the doors (from left to right) into the three slots of this array")]
     public DoorController[] doors;
 
+    [Header("Environment Objects")]
+    public Transform plantLeft;
+    public Transform plantRight;
+    public Transform leftChair;
+    public Transform rightChair;
+    public Renderer lampshadeRenderer;
+
+    private Vector3 plantLeftDefault;
+    private Vector3 plantRightDefault;
+    private Vector3 leftChairDefault;
+    private Vector3 rightChairDefault;
+    private Color lampshadeDefault;
+
+    private void Awake()
+    {
+        if (plantLeft != null) plantLeftDefault = plantLeft.localPosition;
+        if (plantRight != null) plantRightDefault = plantRight.localPosition;
+        if (leftChair != null) leftChairDefault = leftChair.localPosition;
+        if (rightChair != null) rightChairDefault = rightChair.localPosition;
+        if (lampshadeRenderer != null) lampshadeDefault = lampshadeRenderer.material.color;
+    }
+
     // The GameManager can call this to easily lock/unlock a room
     public void SetLockDoors(bool isLocked)
     {
@@ -61,18 +83,42 @@ public class RoomController : MonoBehaviour
         //TODO add logic for other colors
     }
 
-    public void ApplyEnvironmentModifiers(Dictionary<string, object> modifiers)
+    public void ApplyEnvironmentModifiers(RoomConfig.EnvironmentState env)
     {
-        if (modifiers == null || modifiers.Count == 0) return;
+        ResetEnvironment();
 
-        // Example: vase positioning
-        if (modifiers.TryGetValue("vase_side", out object vaseSide))
+        if (env.plantsSwapped && plantLeft != null && plantRight != null)
         {
-            // TODO: move your vase GameObject to the left or right side FIXME
-            // e.g. vaseTransform.localPosition = (string)vaseSide == "right" ? rightPos : leftPos;
-            Debug.Log($"[RoomController] Vase moved to {vaseSide}");
+            plantLeft.localPosition = plantRightDefault;
+            plantRight.localPosition = plantLeftDefault;
         }
 
-        // Add more modifier handlers here as you create meta-rules
+        if (env.leftChairOut && leftChair != null)
+        {
+            leftChair.localPosition = leftChairDefault + new Vector3(0f, 0f, 0.25f);
+        }
+
+        if (env.rightChairOut && rightChair != null)
+        {
+            rightChair.localPosition = rightChairDefault + new Vector3(0f, 0f, -0.25f);
+        }
+
+        if (env.ceilingLightChanged && lampshadeRenderer != null)
+        {
+            lampshadeRenderer.material.color = new Color(
+                Random.Range(0.3f, 1f),
+                Random.Range(0.3f, 1f),
+                Random.Range(0.3f, 1f)
+            );
+        }
+    }
+
+    private void ResetEnvironment()
+    {
+        if (plantLeft != null) plantLeft.localPosition = plantLeftDefault;
+        if (plantRight != null) plantRight.localPosition = plantRightDefault;
+        if (leftChair != null) leftChair.localPosition = leftChairDefault;
+        if (rightChair != null) leftChair.localPosition = rightChairDefault;
+        if (lampshadeRenderer != null) lampshadeRenderer.material.color = lampshadeDefault;
     }
 }

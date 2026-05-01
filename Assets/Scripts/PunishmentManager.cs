@@ -53,6 +53,11 @@ public class PunishmentManager : MonoBehaviour
         return punishmentValues.All(kvp => kvp.Value >= maxStacks[kvp.Key]);
     }
 
+    public int GetActivePunishmentCount()
+    {
+        return punishmentValues.Values.Sum();
+    }
+
     /// High-level: randomly distributes severity across available punishment types.
     /// Returns true if full severity was applied, false otherwise.
     /// If forcePunish is true, applies as much as possible.
@@ -216,6 +221,56 @@ public class PunishmentManager : MonoBehaviour
 
         return actualSeverity;
     }
+
+    public void ResetAllPunishments()
+    {
+        // Reset all counters
+        foreach (var type in punishmentValues.Keys.ToList())
+        {
+            punishmentValues[type] = 0;
+        }
+
+        // Reset all post-processing effects
+        Volume volume = GetComponent<Volume>();
+
+        if (volume.profile.TryGet(out ColorAdjustments colorAdjustments))
+        {
+            colorAdjustments.saturation.Override(0f);
+            colorAdjustments.hueShift.Override(0f);
+            colorAdjustments.colorFilter.Override(Color.white);
+        }
+
+        if (volume.profile.TryGet(out DepthOfField dof))
+        {
+            dof.focalLength.Override(0f);
+        }
+
+        if (volume.profile.TryGet(out LensDistortion lensDistortion))
+        {
+            lensDistortion.intensity.Override(0f);
+        }
+
+        if (volume.profile.TryGet(out FilmGrain filmGrain))
+        {
+            filmGrain.intensity.Override(0f);
+        }
+
+        if (volume.profile.TryGet(out Vignette vignette))
+        {
+            vignette.intensity.Override(0f);
+        }
+
+        if (volume.profile.TryGet(out ChromaticAberration chromaticAberration))
+        {
+            chromaticAberration.intensity.Override(0f);
+        }
+
+        // Stop all audio spam coroutines
+        StopAllCoroutines();
+
+        Debug.Log("[PunishmentManager] All punishments reset.");
+    }
+
     private IEnumerator AudioSpamRoutine(float interval, AudioManager.SoundCategory category)
     {
         while (true)
