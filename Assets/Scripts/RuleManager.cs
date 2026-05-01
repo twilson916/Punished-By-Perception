@@ -1,4 +1,4 @@
-using MyGame.Resources;
+﻿using MyGame.Resources;
 using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ public class RuleManager : MonoBehaviour
     public AudioSource discoverySound;
 
     [Header("Text Assets")]
-    public TextAsset rulesCSV;      // assign in inspector
+    public TextAsset rulesCSV;
 
     private string saveFileName = "rule_save_state.txt";
 
@@ -51,13 +51,70 @@ public class RuleManager : MonoBehaviour
         foreach (var rule in allRules)
         {
             RuleEntryUI ui = CreateRuleEntry(rule.description);
-
-            //ui.SetVisibleInstant(false);
-
             ruleUIMap.Add(rule.ruleName, ui);
         }
 
-        LoadSaveState(); //load save file
+        LoadSaveState();
+    }
+
+    // ─────────────────────────────────────────────
+    //  PUBLIC ACCESSORS (used by RoomConfigurator via GameManager)
+    // ─────────────────────────────────────────────
+
+    // Returns the full list of parsed GameRule objects.
+    public List<GameRule> GetAllRules() => allRules;
+
+    // Returns a set of all rule names the player has discovered so far.
+    public HashSet<GameRule.RuleName> GetDiscoveredRuleNames()
+    {
+        return new HashSet<GameRule.RuleName>(
+            allRules.Where(r => r.isDiscovered).Select(r => r.ruleName)
+        );
+    }
+
+    // ─────────────────────────────────────────────
+    //  DISCOVERY (with parent-gating)
+    // ─────────────────────────────────────────────
+
+    // Attempt to discover a rule. 
+    // If the rule has a parent that isn't discovered yet
+    public void DiscoverRuleByTitle(GameRule.RuleName name)
+    {
+        if (name == GameRule.RuleName.None) return;
+
+        GameRule logicRule = allRules.FirstOrDefault(r => r.ruleName == name);
+        if (logicRule == null) return;
+
+        // Check if we can actually reveal it (parent must be discovered or None)
+        bool canReveal = logicRule.parent == GameRule.RuleName.None || IsRuleDiscovered(logicRule.parent);
+
+        if (canReveal)
+        {
+            logicRule.isDiscovered = true;
+
+            RevealRule(name);
+        }
+
+        SaveProgress();
+    }
+
+    // Check if a rule has been discovered.
+    private bool IsRuleDiscovered(GameRule.RuleName name)
+    {
+        var rule = allRules.FirstOrDefault(r => r.ruleName == name);
+        return rule != null && rule.isDiscovered;
+    }
+
+    // Actually show a rule in the rulebook UI.
+    private void RevealRule(GameRule.RuleName name)
+    {
+        if (!ruleUIMap.TryGetValue(name, out var ui)) return;
+        if (ui.isDiscovered) return; // already visible
+
+        if (discoverySound != null) discoverySound.Play();
+
+        StopAllCoroutines();
+        StartCoroutine(RevealAndScroll(ui));
     }
 
     private void SetupContentLayout()
@@ -83,11 +140,11 @@ public class RuleManager : MonoBehaviour
 
     private RuleEntryUI CreateRuleEntry(string description)
     {
-        // 1. Create the Entry (The Container)
+        // Create the Entry (The Container)
         GameObject entry = new GameObject("RuleEntryUI", typeof(RectTransform));
         entry.transform.SetParent(rulebookScrollView.content, false);
 
-        // 2. Add Layout Components to the Entry
+        // Add Layout Components to the Entry
         // This makes the container follow the size of its text child
         ContentSizeFitter entryFitter = entry.AddComponent<ContentSizeFitter>();
         entryFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -98,29 +155,28 @@ public class RuleManager : MonoBehaviour
         entryLayout.childControlWidth = true;
         entryLayout.padding = new RectOffset(10, 10, 10, 10); // Nice breathing room
 
-        // 3. Add Visual/Logic Components
+        // Add Visual/Logic Components
         CanvasGroup cg = entry.AddComponent<CanvasGroup>();
         cg.alpha = 0f;
 
-        // 4. Create the Text Object
+        // Create the Text Object
         GameObject textObj = new GameObject("Text", typeof(RectTransform));
         textObj.transform.SetParent(entry.transform, false);
 
         TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
         tmp.text = description;
-        tmp.fontSize = 10; // Set your desired size here
+        tmp.fontSize = 10;
         tmp.color = Color.black;
         tmp.enableWordWrapping = true;
         tmp.overflowMode = TextOverflowModes.Overflow;
 
-        // 5. Setup the Wrapper
+        // Setup the Wrapper
         RuleEntryUI wrapper = entry.AddComponent<RuleEntryUI>();
         wrapper.text = tmp;
         wrapper.canvasGroup = cg;
 
         return wrapper;
     }
-
     private List<GameRule> ParseRulesFromFile()
     {
         var rules = new List<GameRule>();
@@ -133,15 +189,12 @@ public class RuleManager : MonoBehaviour
 
         string[] lines = rulesCSV.text.Split('\n');
 
-        for (int i = 1; i < lines.Length; i++) // skip header
+        for (int i = 1; i < lines.Length; i++)
         {
             string line = lines[i].Trim();
-
-            if (string.IsNullOrEmpty(line))
-                continue;
+            if (string.IsNullOrEmpty(line)) continue;
 
             string[] cols = line.Split(',');
-
             if (cols.Length < 6)
             {
                 Debug.LogWarning($"Malformed CSV line: {line}");
@@ -188,10 +241,8 @@ public class RuleManager : MonoBehaviour
             rule.description = desc;
             rule.parent = parent;
             rule.result = result;
-
             rule.doorColor = ColorUtils.ParseColor(doorStr);
             rule.handleColor = ColorUtils.ParseColor(handleStr);
-
             rule.resetRule();
 
             rules.Add(rule);
@@ -203,14 +254,13 @@ public class RuleManager : MonoBehaviour
     private void LoadSaveState()
     {
         string fullPath = Path.Combine(Application.persistentDataPath, saveFileName);
-
         if (!File.Exists(fullPath))
         {
             Debug.Log("No save file found. Starting fresh.");
             return;
         }
 
-        // 1. Read the text file lines
+        // Read the text file lines
         string[] discoveredNames = File.ReadAllLines(fullPath);
 
         foreach (string rawName in discoveredNames)
@@ -219,23 +269,18 @@ public class RuleManager : MonoBehaviour
 
             if (System.Enum.TryParse(trimmedName, out GameRule.RuleName ruleName))
             {
-                // A. Update the UI Wrapper
+                // Update the UI Wrapper
                 if (ruleUIMap.TryGetValue(ruleName, out var ui))
                 {
                     ui.SetVisibleInstant(true);
                 }
 
-                // B. Update the actual GameRule Logic Object
+                // Update the actual GameRule Logic Object
                 // We search the list for the rule with the matching name
                 GameRule logicRule = allRules.FirstOrDefault(r => r.ruleName == ruleName);
                 if (logicRule != null)
                 {
-                    // Assuming GameRule has a 'isFound' or similar boolean
-                    // Adjust 'isFound' to whatever variable name you use in GameRule.cs
                     logicRule.isDiscovered = true;
-
-                    // If your logic needs to trigger something specific when "found" 
-                    // (like updating a door state), call that here.
                 }
             }
         }
@@ -259,20 +304,20 @@ public class RuleManager : MonoBehaviour
 
     public void ClearAllRulesAndSave()
     {
-        // 1. Wipe the logic flags in the master list
+        // Wipe the logic flags in the master list
         foreach (var rule in allRules)
         {
             rule.isDiscovered = false;
         }
 
-        // 2. Wipe the UI visibility and discovery flags
+        // Wipe the UI visibility and discovery flags
         foreach (var ui in ruleUIMap.Values)
         {
             ui.SetVisibleInstant(false);
             ui.isDiscovered = false; // Important: so they can be "discovered" again
         }
 
-        // 3. Delete the physical save file from the disk
+        // Delete the physical save file from the disk
         string fullPath = Path.Combine(Application.persistentDataPath, saveFileName);
 
         if (File.Exists(fullPath))
@@ -281,35 +326,13 @@ public class RuleManager : MonoBehaviour
             Debug.Log("Save file deleted successfully.");
         }
 
-        // 4. Reset the Scroll position to the top
+        // Reset the Scroll position to the top
         rulebookScrollView.verticalNormalizedPosition = 1f;
 
-        // 5. Force UI refresh
+        // Force UI refresh
         Canvas.ForceUpdateCanvases();
 
         Debug.Log("All rules cleared for testing.");
-    }
-
-    public void DiscoverRuleByTitle(GameRule.RuleName name)
-    {
-        if (!ruleUIMap.TryGetValue(name, out var ui)) return;
-
-        if (ui.isDiscovered) return;
-
-        GameRule logicRule = allRules.FirstOrDefault(r => r.ruleName == name);
-        if (logicRule != null)
-        {
-            logicRule.isDiscovered = true;
-        }
-
-        // Play Sound
-        if (discoverySound != null) discoverySound.Play();
-
-        // Start the Reveal and Scroll
-        StopAllCoroutines(); // Optional: prevent overlapping scrolls
-        StartCoroutine(RevealAndScroll(ui));
-
-        SaveProgress();
     }
 
     private IEnumerator RevealAndScroll(RuleEntryUI ui)
