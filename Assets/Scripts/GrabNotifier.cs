@@ -95,6 +95,8 @@ public class GrabNotifier : MonoBehaviour
 
             transform.position = _startPosition;
             transform.rotation = _startRotation;
+
+            AudioManager.Play(AudioManager.SoundCategory.ObjDrop);
         }
 
         _returnCoroutine = null;

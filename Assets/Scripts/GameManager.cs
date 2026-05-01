@@ -154,6 +154,23 @@ public class GameManager : MonoBehaviour
         {
             RoomConfig config = roomConfigs[currentRoom];
             DoorConfig chosenDoor = config.doors[(int)pos];
+
+            //play noise depending on rule action
+            switch(chosenDoor.finalResult)
+            {
+                case RuleResultType.Safe:
+                    break;
+                case RuleResultType.Punishment:
+                    AudioManager.Play(AudioManager.SoundCategory.Wrong);
+                    break;
+                case RuleResultType.Challenge:
+                    AudioManager.Play(AudioManager.SoundCategory.Ding);
+                    break;
+                case RuleResultType.Random:
+                    AudioManager.Play(AudioManager.SoundCategory.Random);
+                    break;
+            }
+
             RuleResultType resolvedResult = chosenDoor.ResolveResult();
             ProcessDoorResult(resolvedResult, chosenDoor, config);
         }
@@ -271,6 +288,7 @@ public class GameManager : MonoBehaviour
     public void OnObjectGrabbed(GrabNotifier obj)
     {
         _heldObjects.Add(obj);
+        AudioManager.Play(AudioManager.SoundCategory.ObjPickup);
     }
 
     public void OnObjectReleased(GrabNotifier obj)

@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 
 public class PunishmentManager : MonoBehaviour
 {
-    public enum PunishmentType { Saturation, HueShift, ColorTint, Blur, LensDistortion, FilmGrain, Vignette, ChromaticAberration };
+    public enum PunishmentType { Saturation, HueShift, ColorTint, Blur, LensDistortion, FilmGrain, Vignette, ChromaticAberration, AudioLoud, AudioEerie };
 
     private Dictionary<PunishmentType, int> punishmentValues = new()
     {
@@ -18,7 +18,9 @@ public class PunishmentManager : MonoBehaviour
         { PunishmentType.LensDistortion, 0 },
         { PunishmentType.FilmGrain, 0 },
         { PunishmentType.Vignette, 0 },
-        { PunishmentType.ChromaticAberration, 0 }
+        { PunishmentType.ChromaticAberration, 0 },
+        { PunishmentType.AudioLoud, 0 },
+        { PunishmentType.AudioEerie, 0 }
     };
 
     // Max stacks for each type before it's fully maxed out
@@ -31,7 +33,9 @@ public class PunishmentManager : MonoBehaviour
         { PunishmentType.LensDistortion, 4 },    // 4 * 0.25 = 1.0
         { PunishmentType.FilmGrain, 1 },
         { PunishmentType.Vignette, 1 },
-        { PunishmentType.ChromaticAberration, 1 }
+        { PunishmentType.ChromaticAberration, 1 },
+        { PunishmentType.AudioLoud, 1 },
+        { PunishmentType.AudioEerie, 1 }
     };
 
     public Dictionary<PunishmentType, int> GetCurrentPunishValues()
@@ -196,9 +200,29 @@ public class PunishmentManager : MonoBehaviour
                     punishmentValues[type] = 1;
                 }
                 break;
+            case PunishmentType.AudioLoud:
+                {
+                    StartCoroutine(AudioSpamRoutine(5, AudioManager.SoundCategory.Loud));
+                    punishmentValues[type] = 1;
+                }
+                break;
+            case PunishmentType.AudioEerie:
+                {
+                    StartCoroutine(AudioSpamRoutine(10, AudioManager.SoundCategory.Eerie));
+                    punishmentValues[type] = 1;
+                }
+                break;
         }
 
         return actualSeverity;
+    }
+    private IEnumerator AudioSpamRoutine(float interval, AudioManager.SoundCategory category)
+    {
+        while (true)
+        {
+            AudioManager.Play(category);
+            yield return new WaitForSeconds(interval + Random.Range(-5f, 5f));
+        }
     }
 
     private void Shuffle<T>(List<T> list)

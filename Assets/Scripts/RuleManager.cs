@@ -17,9 +17,6 @@ public class RuleManager : MonoBehaviour
     [Header("UI Reference")]
     public ScrollRect rulebookScrollView;
 
-    [Header("Audio")]
-    public AudioSource discoverySound;
-
     [Header("Text Assets")]
     public TextAsset rulesCSV;
 
@@ -111,7 +108,7 @@ public class RuleManager : MonoBehaviour
         if (!ruleUIMap.TryGetValue(name, out var ui)) return;
         if (ui.isDiscovered) return; // already visible
 
-        if (discoverySound != null) discoverySound.Play();
+        AudioManager.Play(AudioManager.SoundCategory.Discover);
 
         StopAllCoroutines();
         StartCoroutine(RevealAndScroll(ui));
