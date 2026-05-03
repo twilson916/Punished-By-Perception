@@ -9,6 +9,8 @@ public class RoomController : MonoBehaviour
     [Header("Dependencies")]
     [Tooltip("Drag the root GameObject for the doors (from left to right) into the three slots of this array")]
     public DoorController[] doors;
+    [SerializeField] private GameObject shopCanvas;
+    [SerializeField] private ShopUIController shopUI;
 
     [Header("Environment Objects")]
     public Transform plantLeft;
@@ -30,6 +32,14 @@ public class RoomController : MonoBehaviour
         if (plantRight != null) plantRightDefault = plantRight.localPosition;
         if (leftChair != null) leftChairDefault = leftChair.localPosition;
         if (rightChair != null) rightChairDefault = rightChair.localPosition;
+    }
+
+    private void Start()
+    {
+        if (shopUI != null)
+        {
+            shopUI.Initialize(GameManager.Instance.OnShopItemPurchased);
+        }
     }
 
     // The GameManager can call this to easily lock/unlock a room
@@ -65,6 +75,12 @@ public class RoomController : MonoBehaviour
         {
             door.CloseDoor();
         }
+    }
+
+    public void SetShopVisible(bool visible)
+    {
+        shopCanvas.SetActive(visible);
+        shopUI.ResetShop();
     }
 
     private void ChangeWallColor(Color newColor)

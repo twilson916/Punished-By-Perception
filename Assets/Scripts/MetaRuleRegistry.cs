@@ -65,6 +65,10 @@ public class MetaRuleRegistry : MonoBehaviour
     [Tooltip("Same ScrollRect as the main rulebook — meta rules appear at the bottom")]
     public ScrollRect rulebookScrollView;
 
+    [Header("Dependencies")]
+    [Tooltip("Drag in the punishment manager")]
+    public PunishmentManager punisher;
+
     private string saveFileName = "meta_rule_save_state.txt";
 
     private List<MetaRuleDefinition> allMetaRules;
@@ -180,6 +184,12 @@ public class MetaRuleRegistry : MonoBehaviour
         var next = allMetaRules.FirstOrDefault(r => r.category == MetaRuleCategory.Factual && !r.isDiscovered);
         if (next != null)
             DiscoverMetaRule(next.name);
+        else
+            punisher.Punish(1);
+
+        //Also punish them if they are just finding out about the last rule cause lmao
+        if(next.name == MetaRuleName.EmptyShopPunishes)
+            punisher.Punish(1);
     }
 
     // Discovers the next undiscovered Tricky meta rule in order

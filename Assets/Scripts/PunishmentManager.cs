@@ -38,6 +38,9 @@ public class PunishmentManager : MonoBehaviour
         { PunishmentType.AudioEerie, 1 }
     };
 
+    private Coroutine _loudCoroutine;
+    private Coroutine _eerieCoroutine;
+
     public Dictionary<PunishmentType, int> GetCurrentPunishValues()
     {
         return new Dictionary<PunishmentType, int>(punishmentValues);
@@ -106,6 +109,9 @@ public class PunishmentManager : MonoBehaviour
             Debug.LogWarning($"Could not apply full punishment. Applied {severity - remaining}/{severity}");
             return false;
         }
+
+        // Play laughter on them getting punished
+        AudioManager.Play(AudioManager.SoundCategory.Laughter);
 
         return true;
     }
@@ -207,14 +213,189 @@ public class PunishmentManager : MonoBehaviour
                 break;
             case PunishmentType.AudioLoud:
                 {
-                    StartCoroutine(AudioSpamRoutine(5, AudioManager.SoundCategory.Loud));
+                    if (_loudCoroutine != null) StopCoroutine(_loudCoroutine);
+                    _loudCoroutine = StartCoroutine(AudioSpamRoutine(5, AudioManager.SoundCategory.Loud));
                     punishmentValues[type] = 1;
                 }
                 break;
+
             case PunishmentType.AudioEerie:
                 {
-                    StartCoroutine(AudioSpamRoutine(10, AudioManager.SoundCategory.Eerie));
+                    if (_eerieCoroutine != null) StopCoroutine(_eerieCoroutine);
+                    _eerieCoroutine = StartCoroutine(AudioSpamRoutine(10, AudioManager.SoundCategory.Eerie));
                     punishmentValues[type] = 1;
+                }
+                break;
+        }
+
+        return actualSeverity;
+    }
+
+    /// High-level: randomly removes severity across active punishment types.
+    /// Returns the number of severity units actually removed.
+    public int Unpunish(int severity)
+    {
+        int remaining = severity;
+
+        // Get all types that have at least one stack and shuffle them
+        List<PunishmentType> available = punishmentValues
+            .Where(kvp => kvp.Value > 0)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        Shuffle(available);
+
+        // Spread one unit of removal across random active types
+        foreach (var type in available)
+        {
+            if (remaining <= 0) break;
+
+            int removed = Unpunish(type, 1);
+            remaining -= removed;
+        }
+
+        // If still remaining, loop again on anything that still has stacks
+        if (remaining > 0)
+        {
+            available = punishmentValues
+                .Where(kvp => kvp.Value > 0)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            Shuffle(available);
+
+            foreach (var type in available)
+            {
+                if (remaining <= 0) break;
+
+                int removed = Unpunish(type, remaining);
+                remaining -= removed;
+            }
+        }
+
+        int totalRemoved = severity - remaining;
+
+        if (remaining > 0)
+        {
+            Debug.LogWarning($"[PunishmentManager] Could not remove full severity. Removed {totalRemoved}/{severity}");
+        }
+
+        return totalRemoved;
+    }
+
+    /// Low-level: removes punishment stacks from a specific type.
+    /// Returns the number of severity units actually removed.
+    private int Unpunish(PunishmentType type, int severity = 1)
+    {
+        int current = punishmentValues[type];
+        int actualSeverity = Mathf.Min(severity, current);
+
+        if (actualSeverity <= 0) return 0;
+
+        switch (type)
+        {
+            case PunishmentType.Saturation:
+                {
+                    Volume volume = GetComponent<Volume>();
+                    volume.profile.TryGet(out ColorAdjustments colorAdjustments);
+                    float newVal = Mathf.Clamp(colorAdjustments.saturation.value + 33.33f * actualSeverity, -100f, 0f);
+                    colorAdjustments.saturation.Override(newVal);
+                    punishmentValues[type] -= actualSeverity;
+                }
+                break;
+
+            case PunishmentType.HueShift:
+                {
+                    Volume volume = GetComponent<Volume>();
+                    volume.profile.TryGet(out ColorAdjustments colorAdjustments);
+                    float newVal = Mathf.Clamp(colorAdjustments.hueShift.value + 15f * actualSeverity, -180f, 180f);
+                    colorAdjustments.hueShift.Override(newVal);
+                    punishmentValues[type] -= actualSeverity;
+                }
+                break;
+
+            case PunishmentType.ColorTint:
+                {
+                    Color startColor = Color.white;
+                    Color endColor = new Color(0.1f, 0.02f, 0.02f);
+
+                    punishmentValues[type] = Mathf.Max(punishmentValues[type] - actualSeverity, 0);
+
+                    float t = (float)punishmentValues[type] / maxStacks[type];
+                    Color tint = Color.Lerp(startColor, endColor, t);
+
+                    Volume volume = GetComponent<Volume>();
+                    volume.profile.TryGet(out ColorAdjustments colorAdjustments);
+                    colorAdjustments.colorFilter.Override(tint);
+                }
+                break;
+
+            case PunishmentType.Blur:
+                {
+                    Volume volume = GetComponent<Volume>();
+                    volume.profile.TryGet(out DepthOfField dof);
+                    float newVal = Mathf.Clamp(dof.focalLength.value - 40f * actualSeverity, 0f, 300f);
+                    dof.focalLength.Override(newVal);
+                    punishmentValues[type] -= actualSeverity;
+                }
+                break;
+
+            case PunishmentType.LensDistortion:
+                {
+                    Volume volume = GetComponent<Volume>();
+                    volume.profile.TryGet(out LensDistortion lensDistortion);
+                    float newVal = Mathf.Clamp(lensDistortion.intensity.value - 0.25f * actualSeverity, 0f, 1f);
+                    lensDistortion.intensity.Override(newVal);
+                    punishmentValues[type] -= actualSeverity;
+                }
+                break;
+
+            case PunishmentType.FilmGrain:
+                {
+                    Volume volume = GetComponent<Volume>();
+                    volume.profile.TryGet(out FilmGrain filmGrain);
+                    filmGrain.intensity.Override(0f);
+                    punishmentValues[type] = 0;
+                }
+                break;
+
+            case PunishmentType.Vignette:
+                {
+                    Volume volume = GetComponent<Volume>();
+                    volume.profile.TryGet(out Vignette vignette);
+                    vignette.intensity.Override(0f);
+                    punishmentValues[type] = 0;
+                }
+                break;
+
+            case PunishmentType.ChromaticAberration:
+                {
+                    Volume volume = GetComponent<Volume>();
+                    volume.profile.TryGet(out ChromaticAberration chromaticAberration);
+                    chromaticAberration.intensity.Override(0f);
+                    punishmentValues[type] = 0;
+                }
+                break;
+
+            case PunishmentType.AudioLoud:
+                {
+                    if (_loudCoroutine != null)
+                    {
+                        StopCoroutine(_loudCoroutine);
+                        _loudCoroutine = null;
+                    }
+                    punishmentValues[type] = 0;
+                }
+                break;
+
+            case PunishmentType.AudioEerie:
+                {
+                    if (_eerieCoroutine != null)
+                    {
+                        StopCoroutine(_eerieCoroutine);
+                        _eerieCoroutine = null;
+                    }
+                    punishmentValues[type] = 0;
                 }
                 break;
         }
@@ -265,8 +446,16 @@ public class PunishmentManager : MonoBehaviour
             chromaticAberration.intensity.Override(0f);
         }
 
-        // Stop all audio spam coroutines
-        StopAllCoroutines();
+        if (_loudCoroutine != null)
+        {
+            StopCoroutine(_loudCoroutine);
+            _loudCoroutine = null;
+        }
+        if (_eerieCoroutine != null)
+        {
+            StopCoroutine(_eerieCoroutine);
+            _eerieCoroutine = null;
+        }
 
         Debug.Log("[PunishmentManager] All punishments reset.");
     }

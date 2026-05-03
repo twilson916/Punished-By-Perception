@@ -15,7 +15,7 @@ public class AudioManager : MonoBehaviour
         Wrong, //
         Ding, //
         Loud, //
-        Laughter,
+        Laughter, //
         Random, //
         Discover, //
         Eerie, //

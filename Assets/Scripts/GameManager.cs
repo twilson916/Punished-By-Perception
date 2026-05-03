@@ -50,12 +50,12 @@ public class GameManager : MonoBehaviour
 
     // Constants
     private const int ROOMS_TO_WIN = 20;
-    private const int MAX_PUNISHMENTS = 5;
+    private const int MAX_PUNISHMENTS = 7;
     private const int MAX_CHALLENGE_FAILS = 3;
     private const int CHALLENGE_ROOM_INTERVAL = 3;
     private const int QUIZ_ROOM_INTERVAL = 7;
     private const int SHOP_ROOM_INTERVAL = 9;
-    private const int INVERT_ROOM_INTERVAL = 6;
+    //private const int INVERT_ROOM_INTERVAL = 6; //hardcoded into meta rule
 
     private void Awake()
     {
@@ -154,6 +154,9 @@ public class GameManager : MonoBehaviour
 
     public void OnLoopTeleport() // Room 3 → Room 1 teleport
     {
+        //Turn off any shops that mightve been in room three
+        sceneRooms[(int)RoomNumber.Three].SetShopVisible(false);
+
         currentRoom = RoomNumber.One;
     }
 
@@ -161,6 +164,11 @@ public class GameManager : MonoBehaviour
     {
         sceneRooms[(int)currentRoom].SetLockDoors(true);
         sceneRooms[(int)currentRoom].OpenDoor(pos);
+
+        if(((int)currentRoom + 1) % SHOP_ROOM_INTERVAL == 0)
+        {
+            sceneRooms[(int)totalRoomsVisited + 1].SetShopVisible(true); //make shop visible before entering room
+        }
 
         // Resolve immediately — punishment/challenge hits when the door opens
         if (roomConfigs.ContainsKey(currentRoom))
@@ -198,6 +206,9 @@ public class GameManager : MonoBehaviour
         {
             sceneRooms[(int)newRoomNum - 1].CloseAllDoors();
         }
+
+        // Close any shop from the previous room
+        sceneRooms[(int)newRoomNum - 1].SetShopVisible(false);
 
         // Build and apply upcoming rooms
         switch (newRoomNum)
@@ -255,17 +266,29 @@ public class GameManager : MonoBehaviour
 
         if (totalRoomsVisited % SHOP_ROOM_INTERVAL == 0)
         {
-            // TODO: trigger shop FIXME
+            sceneRooms[(int)newRoomNum].SetShopVisible(true);
+            if(newRoomNum == RoomNumber.Three)
+            {
+                sceneRooms[(int)RoomNumber.One].SetShopVisible(true);
+            }
             Debug.Log("[GameManager] 9th room — shop!");
         }
 
 
 
         // Punish for held objects (mug logic)
-        punisher.Punish(_heldObjects.Count);
+        if(hasPunishmentShield && _heldObjects.Count > 0)
+        {
+            punisher.Punish(_heldObjects.Count - 1);
+            hasPunishmentShield = false;
+        }
+        else
+        {
+            punisher.Punish(_heldObjects.Count);
+        }
 
         // Unlock new room's doors
-        sceneRooms[(int)newRoomNum].SetLockDoors(false);
+        sceneRooms[(int)newRoomNum].SetLockDoors(false); //FIXME FIXME FIXME only unlock if no challenge or quiz
         currentRoom = newRoomNum;
     }
 
@@ -376,6 +399,51 @@ public class GameManager : MonoBehaviour
         _heldObjects.Remove(obj);
     }
 
+    public void OnShopItemPurchased(ShopUIController.ShopItem item)
+    {
+        switch (item)
+        {
+            case ShopUIController.ShopItem.Mulligan:
+                //Cost is 1 punish
+                punisher.Punish(1);
+
+                // Undo a random punishment (nothing is gained)
+                int removed = punisher.Unpunish(1);
+                if (removed > 0)
+                    Debug.Log("[GameManager] Mulligan used — removed a punishment!");
+                else
+                    Debug.Log("[GameManager] Mulligan used — but nothing to remove.");
+                break;
+
+            case ShopUIController.ShopItem.PunishmentShield:
+                //Cost is 1 punish
+                punisher.Punish(1);
+
+                //Then they get a shield (nothing is gained)
+                hasPunishmentShield = true;
+                Debug.Log("[GameManager] Punishment shield purchased!");
+                break;
+
+            case ShopUIController.ShopItem.RulebookSilver:
+                //Cost is 1 punish
+                punisher.Punish(1);
+
+                MetaRuleRegistry.Instance.DiscoverNextFactualRule();
+                Debug.Log("[GameManager] Silver rulebook purchased!");
+                break;
+
+            case ShopUIController.ShopItem.RulebookGold:
+                //Cost is 1 punish
+                punisher.Punish(1);
+
+                //FIXME FIXME tricky rules require the user to answer a quiz
+                //enqueue question then on challenge complete feedback give them the factual hint as follows...
+                //MetaRuleRegistry.Instance.DiscoverNextFactualRule();
+                Debug.Log("[GameManager] Gold rulebook purchased!");
+                break;
+        }
+    }
+
     // Full run reset. Clears all game state except rulebook discoveries.
     // Call this from the hand-on-floor gesture, 5-punishment limit, or 3-challenge-fail limit.
     public void ResetRun()
@@ -417,6 +485,9 @@ public class GameManager : MonoBehaviour
         {
             room.CloseAllDoors();
             room.SetLockDoors(true);
+            room.SetShopVisible(false);
+
+            //FIXME FIXME FIXME reset all quiz windows
         }
 
         // Rebuild rooms fresh
