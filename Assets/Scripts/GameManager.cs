@@ -450,7 +450,5 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log("[GameManager] Run reset complete.");
-
-        detector.ResetDetector();
     }
 }

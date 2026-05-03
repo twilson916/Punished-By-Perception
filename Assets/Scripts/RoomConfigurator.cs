@@ -334,21 +334,28 @@ public class RoomConfigurator
         if (context.totalRoomsVisited >= _metaRuleMinRoom)
         {
             // First: non-environmental rules (can all fire)
+            bool nonEnvFired = false;
             foreach (var metaRule in _metaRules.Where(r => !r.isEnvironmental))
             {
                 if (metaRule.IsActive(context))
+                {
                     metaRule.Apply(config, context);
+                    nonEnvFired = true;
+                }
             }
 
-            // Second: environmental rules (only one fires)
-            var eligibleEnv = _metaRules
-                .Where(r => r.isEnvironmental && r.IsActive(context))
-                .ToList();
-
-            if (eligibleEnv.Count > 0)
+            // Second: environmental rules (only one fires, and ONLY if no non-env rule fired)
+            if (!nonEnvFired)
             {
-                var chosen = eligibleEnv[UnityEngine.Random.Range(0, eligibleEnv.Count)];
-                chosen.Apply(config, context);
+                var eligibleEnv = _metaRules
+                    .Where(r => r.isEnvironmental && r.IsActive(context))
+                    .ToList();
+
+                if (eligibleEnv.Count > 0)
+                {
+                    var chosen = eligibleEnv[UnityEngine.Random.Range(0, eligibleEnv.Count)];
+                    chosen.Apply(config, context);
+                }
             }
         }
 

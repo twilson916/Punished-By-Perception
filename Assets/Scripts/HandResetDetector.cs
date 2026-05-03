@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class HandResetDetector : MonoBehaviour
 {
@@ -7,12 +8,15 @@ public class HandResetDetector : MonoBehaviour
     public Transform leftHand;
     [Tooltip("The Transform of the right hand/controller")]
     public Transform rightHand;
-
     [Header("Settings")]
     [Tooltip("Y position threshold — hands must be below this to count as 'on the floor'")]
     public float floorThreshold = 0.15f;
     [Tooltip("How long both hands must stay down")]
     public float holdDuration = 3f;
+    [Tooltip("Cooldown after any reset before another can trigger")]
+    public float resetCooldown = 3f;
+    [Tooltip("Hands at origin means tracking lost -> ignore")]
+    public float trackingLostThreshold = 0.001f;
 
     private float holdBothTimer = 0f;
     private float holdOneTimer = 0f;
@@ -22,24 +26,30 @@ public class HandResetDetector : MonoBehaviour
     {
         if (resetTriggered) return;
 
-        bool bothHandsDown = leftHand.position.y <= floorThreshold
-                          && rightHand.position.y <= floorThreshold;
-        bool oneHandDown = leftHand.position.y <= floorThreshold
-                          || rightHand.position.y <= floorThreshold;
+        bool leftValid = IsHandTracked(leftHand);
+        bool rightValid = IsHandTracked(rightHand);
+
+        bool leftDown = leftValid && leftHand.position.y <= floorThreshold;
+        bool rightDown = rightValid && rightHand.position.y <= floorThreshold;
+
+        bool bothHandsDown = leftDown && rightDown;
+        bool oneHandDown = leftDown != rightDown; // exactly one
 
         if (bothHandsDown)
         {
+            holdOneTimer = 0f;
             holdBothTimer += Time.deltaTime;
-
             if (holdBothTimer >= holdDuration)
             {
                 resetTriggered = true;
+                StartCoroutine(CooldownRoutine());
                 GameManager.Instance.ResetRun();
             }
         }
-        else if(oneHandDown) {
+        else if (oneHandDown)
+        {
+            holdBothTimer = 0f;
             holdOneTimer += Time.deltaTime;
-
             if (holdOneTimer >= 5f)
             {
                 // LMAO this is diabolical, you get a hint that your BOUGHT that tells you this is how to wipe out your punishments
@@ -47,22 +57,31 @@ public class HandResetDetector : MonoBehaviour
                 // Also useful asa dev tool to reset the save easily
                 RuleManager.Instance.ClearAllRulesAndSave();
                 MetaRuleRegistry.Instance.ClearAllMetaRules();
-
-
                 resetTriggered = true;
+                StartCoroutine(CooldownRoutine());
                 GameManager.Instance.ResetRun();
             }
         }
-        else {
+        else
+        {
             holdBothTimer = 0f;
+            holdOneTimer = 0f;
         }
     }
 
-    // Called by GameManager.ResetRun() finishing so the detector can fire again.
-    // Hook this up at the end of ResetRun or just call it after.
-    public void ResetDetector()
+    private bool IsHandTracked(Transform hand)
     {
+        if (hand == null) return false;
+        if (!hand.gameObject.activeInHierarchy) return false;
+        if (hand.localPosition.sqrMagnitude < trackingLostThreshold * trackingLostThreshold) return false;
+        return true;
+    }
+
+    private IEnumerator CooldownRoutine()
+    {
+        yield return new WaitForSeconds(resetCooldown);
         resetTriggered = false;
         holdBothTimer = 0f;
+        holdOneTimer = 0f;
     }
 }

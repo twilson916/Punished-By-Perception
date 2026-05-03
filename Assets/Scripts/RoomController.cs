@@ -118,7 +118,7 @@ public class RoomController : MonoBehaviour
         if (plantLeft != null) plantLeft.localPosition = plantLeftDefault;
         if (plantRight != null) plantRight.localPosition = plantRightDefault;
         if (leftChair != null) leftChair.localPosition = leftChairDefault;
-        if (rightChair != null) leftChair.localPosition = rightChairDefault;
+        if (rightChair != null) rightChair.localPosition = rightChairDefault;
         if (lampshadeRenderer != null) lampshadeRenderer.material.color = lampshadeDefault;
     }
 }
