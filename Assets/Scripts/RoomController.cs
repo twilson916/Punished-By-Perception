@@ -21,7 +21,8 @@ public class RoomController : MonoBehaviour
     private Vector3 plantRightDefault;
     private Vector3 leftChairDefault;
     private Vector3 rightChairDefault;
-    private Color lampshadeDefault;
+    public Texture2D lampshadeNormalTexture;
+    public Texture2D lampshadeChangedTexture;
 
     private void Awake()
     {
@@ -29,7 +30,6 @@ public class RoomController : MonoBehaviour
         if (plantRight != null) plantRightDefault = plantRight.localPosition;
         if (leftChair != null) leftChairDefault = leftChair.localPosition;
         if (rightChair != null) rightChairDefault = rightChair.localPosition;
-        if (lampshadeRenderer != null) lampshadeDefault = lampshadeRenderer.material.color;
     }
 
     // The GameManager can call this to easily lock/unlock a room
@@ -105,11 +105,7 @@ public class RoomController : MonoBehaviour
 
         if (env.ceilingLightChanged && lampshadeRenderer != null)
         {
-            lampshadeRenderer.material.color = new Color(
-                Random.Range(0.3f, 1f),
-                Random.Range(0.3f, 1f),
-                Random.Range(0.3f, 1f)
-            );
+            lampshadeRenderer.material.SetTexture("_BaseMap", lampshadeChangedTexture);
         }
     }
 
@@ -119,6 +115,6 @@ public class RoomController : MonoBehaviour
         if (plantRight != null) plantRight.localPosition = plantRightDefault;
         if (leftChair != null) leftChair.localPosition = leftChairDefault;
         if (rightChair != null) rightChair.localPosition = rightChairDefault;
-        if (lampshadeRenderer != null) lampshadeRenderer.material.color = lampshadeDefault;
+        if (lampshadeRenderer != null) lampshadeRenderer.material.SetTexture("_BaseMap", lampshadeNormalTexture);
     }
 }

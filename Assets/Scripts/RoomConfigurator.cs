@@ -256,7 +256,7 @@ public class RoomConfigurator
     private const float DISCOVERED_SAFE_WEIGHT = 0.15f;
     private const int MAX_SAFE_GUARANTEE_ATTEMPTS = 30;
 
-    private int _metaRuleMinRoom = 5;
+    private int _metaRuleMinRoom = 6;
 
     private HashSet<GameRule.RuleName> _dupeProtectionDoors = new HashSet<GameRule.RuleName>();
 

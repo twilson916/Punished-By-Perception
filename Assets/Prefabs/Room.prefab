@@ -1422,6 +1422,10 @@ MonoBehaviour:
   leftChair: {fileID: 1446323406721133294}
   rightChair: {fileID: 1392623244610869915}
   lampshadeRenderer: {fileID: 6486549434462931113}
+  lampshadeNormalTexture: {fileID: 2800000, guid: b9378395c3f2bf94ea0c2c6a806d59c6,
+    type: 3}
+  lampshadeChangedTexture: {fileID: 2800000, guid: df5855ebeb934c84f8b073e36c879f78,
+    type: 3}
 --- !u!1 &9182699457045090501
 GameObject:
   m_ObjectHideFlags: 0
