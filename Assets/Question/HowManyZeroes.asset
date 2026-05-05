@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 863818a3fc0b76a43985c3b752e82c48, type: 3}
+  m_Name: HowManyZeroes
+  m_EditorClassIdentifier: 
+  questionText: How many zeroes do you see?
+  textPosition: 2
+  artwork: {fileID: 21300000, guid: 8cb879c824ff7f34d8b610d7185d78f5, type: 3}
+  imagePosition: 6
+  answerA: none
+  answerB: 4
+  answerC: 6
+  answerD: 7
+  correctAnswerIndex: 2
+  timeLimit: 5
