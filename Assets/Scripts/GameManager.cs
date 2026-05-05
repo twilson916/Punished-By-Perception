@@ -165,9 +165,9 @@ public class GameManager : MonoBehaviour
         sceneRooms[(int)currentRoom].SetLockDoors(true);
         sceneRooms[(int)currentRoom].OpenDoor(pos);
 
-        if(((int)currentRoom + 1) % SHOP_ROOM_INTERVAL == 0)
+        if((totalRoomsVisited + 1) % SHOP_ROOM_INTERVAL == 0)
         {
-            sceneRooms[(int)totalRoomsVisited + 1].SetShopVisible(true); //make shop visible before entering room
+            sceneRooms[(int)currentRoom + 1].SetShopVisible(true); //make shop visible before entering room
         }
 
         // Resolve immediately — punishment/challenge hits when the door opens
@@ -214,8 +214,6 @@ public class GameManager : MonoBehaviour
         switch (newRoomNum)
         {
             case RoomNumber.One:
-                totalRoomsVisited++;
-
                 var room2Config = BuildNewRoomConfig();
                 roomConfigs[RoomNumber.Two] = room2Config;
                 ApplyRoomConfig(RoomNumber.Two, room2Config);
@@ -233,6 +231,8 @@ public class GameManager : MonoBehaviour
                 break;
 
             case RoomNumber.Three:
+                totalRoomsVisited++;
+
                 if (roomConfigs.ContainsKey(RoomNumber.Three))
                 {
                     roomConfigs[RoomNumber.One] = roomConfigs[RoomNumber.Three];
@@ -244,7 +244,7 @@ public class GameManager : MonoBehaviour
 
 
         // Check win condition
-        if (totalRoomsVisited >= ROOMS_TO_WIN)
+        if (totalRoomsVisited >= ROOMS_TO_WIN && newRoomNum != RoomNumber.One)
         {
             // TODO: trigger win state FIXME
             Debug.Log("[GameManager] YOU WIN!");
@@ -252,19 +252,19 @@ public class GameManager : MonoBehaviour
         }
 
         // Room interval events
-        if (totalRoomsVisited % CHALLENGE_ROOM_INTERVAL == 0)
+        if (totalRoomsVisited % CHALLENGE_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
             // TODO: trigger additional challenge (teammate implementing) FIXME
             Debug.Log("[GameManager] 3rd room — additional challenge!");
         }
 
-        if (totalRoomsVisited % QUIZ_ROOM_INTERVAL == 0)
+        if (totalRoomsVisited % QUIZ_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
             // TODO: trigger quiz (teammate implementing) FIXME
             Debug.Log("[GameManager] 7th room — quiz time!");
         }
 
-        if (totalRoomsVisited % SHOP_ROOM_INTERVAL == 0)
+        if (totalRoomsVisited % SHOP_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
             sceneRooms[(int)newRoomNum].SetShopVisible(true);
             if(newRoomNum == RoomNumber.Three)
@@ -277,7 +277,7 @@ public class GameManager : MonoBehaviour
 
 
         // Punish for held objects (mug logic)
-        if(hasPunishmentShield && _heldObjects.Count > 0)
+        if (hasPunishmentShield && _heldObjects.Count > 0)
         {
             punisher.Punish(_heldObjects.Count - 1);
             hasPunishmentShield = false;

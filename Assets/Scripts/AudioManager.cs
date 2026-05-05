@@ -9,6 +9,7 @@ public class AudioManager : MonoBehaviour
 {
     public enum SoundCategory
     {
+        // means used in a particular instance/logic
         ObjPickup, //
         ObjDrop, //
         Correct, //
@@ -19,9 +20,9 @@ public class AudioManager : MonoBehaviour
         Random, //
         Discover, //
         Eerie, //
-        Shop,
+        Shop, //
         QuizFail,
-        NewRound
+        NewRound //
     }
 
     [Serializable]

@@ -79,8 +79,12 @@ public class RoomController : MonoBehaviour
 
     public void SetShopVisible(bool visible)
     {
+        if (!shopCanvas.activeInHierarchy && visible)
+        {
+            AudioManager.Play(AudioManager.SoundCategory.Shop);
+            shopUI.ResetShop();
+        }
         shopCanvas.SetActive(visible);
-        shopUI.ResetShop();
     }
 
     private void ChangeWallColor(Color newColor)
