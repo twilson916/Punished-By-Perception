@@ -78,7 +78,12 @@ public class DoorController : MonoBehaviour
 
     private void OnSelected(IInteractorView interactor)
     {
-        isLocked = true; //lockout to prevent double triggers
+        if (isLocked)
+        {
+            AudioManager.Play(AudioManager.SoundCategory.LockedDoor);
+            return;
+        }
+        isLocked = true; // lockout to prevent double triggers
 
         Debug.Log($"DoorController: Door {position} Clicked!");
         GameManager.Instance.OnDoorClicked(position);

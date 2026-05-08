@@ -165,6 +165,9 @@ public class GameManager : MonoBehaviour
         sceneRooms[(int)currentRoom].SetLockDoors(true);
         sceneRooms[(int)currentRoom].OpenDoor(pos);
 
+        if (totalRoomsVisited == 1)
+            sceneRooms[(int)RoomNumber.MinusOne].OpenDoor(DoorPos.Left);
+
         if((totalRoomsVisited + 1) % SHOP_ROOM_INTERVAL == 0)
         {
             sceneRooms[(int)currentRoom + 1].SetShopVisible(true); //make shop visible before entering room
@@ -201,6 +204,8 @@ public class GameManager : MonoBehaviour
     {
         if (currentRoom == newRoomNum) return;
 
+        if(totalRoomsVisited == 1) sceneRooms[(int)RoomNumber.MinusOne].SetLockDoors(true);
+
         // Close doors behind the player
         if (newRoomNum == RoomNumber.Two || newRoomNum == RoomNumber.Three)
         {
@@ -221,7 +226,6 @@ public class GameManager : MonoBehaviour
 
             case RoomNumber.Two:
                 totalRoomsVisited++;
-
                 var room3Config = BuildNewRoomConfig();
                 roomConfigs[RoomNumber.Three] = room3Config;
                 ApplyRoomConfig(RoomNumber.Three, room3Config);
@@ -288,7 +292,10 @@ public class GameManager : MonoBehaviour
         }
 
         // Unlock new room's doors
-        sceneRooms[(int)newRoomNum].SetLockDoors(false); //FIXME FIXME FIXME only unlock if no challenge or quiz
+        if (newRoomNum != RoomNumber.Three)
+        {
+            sceneRooms[(int)newRoomNum].SetLockDoors(false); //FIXME FIXME FIXME only unlock if no challenge or quiz
+        }
         currentRoom = newRoomNum;
     }
 
