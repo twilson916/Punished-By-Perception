@@ -10,6 +10,8 @@ public class DoorController : MonoBehaviour
     [Header("Object Identifiers/Logic")]
     [Tooltip("Door position must be set as left middle or right from unity inspector")]
     public DoorPos position;
+    [Tooltip("Room this door belongs to, must be set in inspector")]
+    public RoomNumber roomNumber;
     public bool isLocked = true;
 
     [Header("Mesh References")]
@@ -86,7 +88,7 @@ public class DoorController : MonoBehaviour
         isLocked = true; // lockout to prevent double triggers
 
         Debug.Log($"DoorController: Door {position} Clicked!");
-        GameManager.Instance.OnDoorClicked(position);
+        GameManager.Instance.OnDoorClicked(position, roomNumber);
     }
 
     private void OnDeselected(IInteractorView interactor)

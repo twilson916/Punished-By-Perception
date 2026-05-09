@@ -5,7 +5,7 @@ using UnityEngine;
 // Definitions/Resources (mainly just enums)
 namespace MyGame.Resources
 {
-    public enum GameState { Exploring, Puzzle, Ending }; //placeholders for now
+    public enum GameState { Exploring, FakeEnding, Ending }; //placeholders for now
 
     public enum RoomNumber { MinusOne = 0, One = 1, Two = 2, Three = 3 }; // Minus one rooms to handle door changes behind room 1
 

@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections;
 
+using MyGame.Resources;
+
 public class HandResetDetector : MonoBehaviour
 {
     [Header("Hand Tracking References")]
@@ -38,6 +40,7 @@ public class HandResetDetector : MonoBehaviour
 
     private void Update()
     {
+        if (GameManager.Instance.currentState == GameState.Ending) return;
         if (resetTriggered) return;
 
         bool leftValid = IsHandTracked(leftHand) && !IsHandStale(leftHand, ref lastLeftPos, ref leftStaleTime);
@@ -58,7 +61,7 @@ public class HandResetDetector : MonoBehaviour
         bool bothHandsDown = leftDown && rightDown;
         bool oneHandDown = leftDown != rightDown; // exactly one
 
-        if (bothHandsDown)
+        if (bothHandsDown && GameManager.Instance.currentState != GameState.FakeEnding)
         {
             holdOneTimer = 0f;
             holdBothTimer += Time.deltaTime;

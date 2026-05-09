@@ -51,6 +51,11 @@ public class RoomController : MonoBehaviour
         }
     }
 
+    public void SetLockDoor(DoorPos pos, bool isLocked)
+    {
+        doors[(int)pos].isLocked = false;
+    }
+
     public void OpenDoor(DoorPos pos)
     {
         doors[(int)pos].OpenDoor();

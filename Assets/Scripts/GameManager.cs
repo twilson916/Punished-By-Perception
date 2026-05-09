@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using MyGame.Resources;
+using Meta.WitAi;
 
 public class GameManager : MonoBehaviour
 {
@@ -24,7 +25,7 @@ public class GameManager : MonoBehaviour
     public HandResetDetector detector;
 
     // game state enum
-    private GameState currentState;
+    public GameState currentState { get; private set; }
 
     // keep track of room count/progress
     private int totalRoomsVisited = 1;
@@ -56,6 +57,12 @@ public class GameManager : MonoBehaviour
     private const int QUIZ_ROOM_INTERVAL = 7;
     private const int SHOP_ROOM_INTERVAL = 9;
     //private const int INVERT_ROOM_INTERVAL = 6; //hardcoded into meta rule
+
+    [SerializeField] private AudioClip monologue;
+    private AudioSource audioSource;
+    private bool playedMonologue = false;
+    private bool endingDoorsClosed = false;
+    [SerializeField] private Transform playerTransform;
 
     private void Awake()
     {
@@ -101,6 +108,28 @@ public class GameManager : MonoBehaviour
 
         // Unlock first room's doors
         sceneRooms[(int)currentRoom].SetLockDoors(false);
+
+        audioSource = GetComponent<AudioSource>();
+    }
+
+    private void Update()
+    {
+        if (currentState == GameState.Ending)
+        {
+            if (playerTransform.position.y < -1 && !playedMonologue)
+            {
+                playedMonologue = true;
+                audioSource.clip = monologue;
+                audioSource.Play();
+            }
+            if (playerTransform.position.z > 1.5 && !endingDoorsClosed)
+            {
+                endingDoorsClosed = true;
+                sceneRooms[(int)RoomNumber.MinusOne].SetLockDoors(false);
+                sceneRooms[(int)RoomNumber.One].SetLockDoors(false);
+                sceneRooms[(int)RoomNumber.MinusOne].CloseAllDoors();
+            }
+        }
     }
 
     // Ask the configurator for a new room based on current game state.
@@ -157,30 +186,43 @@ public class GameManager : MonoBehaviour
         //Turn off any shops that mightve been in room three
         sceneRooms[(int)RoomNumber.Three].SetShopVisible(false);
 
+        // Unlock room 1 directly — OnRoomEntry(One) will early-return since currentRoom is already One
+        sceneRooms[(int)RoomNumber.One].SetLockDoors(false);
+
         currentRoom = RoomNumber.One;
     }
 
-    public void OnDoorClicked(DoorPos pos)
+    public void OnDoorClicked(DoorPos pos, RoomNumber fromRoom)
     {
-        sceneRooms[(int)currentRoom].SetLockDoors(true);
-        sceneRooms[(int)currentRoom].OpenDoor(pos);
+        if (currentState == GameState.Ending) return;
+
+        sceneRooms[(int)fromRoom].SetLockDoors(true);
+        sceneRooms[(int)fromRoom].OpenDoor(pos);
+
+        if (fromRoom == RoomNumber.MinusOne)
+        {
+            currentState = GameState.Ending;
+            sceneRooms[(int)RoomNumber.One].SetLockDoors(false); //no longer allowed to continue
+            punisher.ResetAllPunishments();
+            return;
+        }
 
         if (totalRoomsVisited == 1)
-            sceneRooms[(int)RoomNumber.MinusOne].OpenDoor(DoorPos.Left);
+            sceneRooms[(int)RoomNumber.MinusOne].SetLockDoor(DoorPos.Left, false);
 
-        if((totalRoomsVisited + 1) % SHOP_ROOM_INTERVAL == 0)
+        if ((totalRoomsVisited + 1) % SHOP_ROOM_INTERVAL == 0)
         {
-            sceneRooms[(int)currentRoom + 1].SetShopVisible(true); //make shop visible before entering room
+            sceneRooms[(int)fromRoom + 1].SetShopVisible(true); //make shop visible before entering room
         }
 
         // Resolve immediately — punishment/challenge hits when the door opens
-        if (roomConfigs.ContainsKey(currentRoom))
+        if (roomConfigs.ContainsKey(fromRoom))
         {
-            RoomConfig config = roomConfigs[currentRoom];
+            RoomConfig config = roomConfigs[fromRoom];
             DoorConfig chosenDoor = config.doors[(int)pos];
 
             //play noise depending on rule action
-            switch(chosenDoor.finalResult)
+            switch (chosenDoor.finalResult)
             {
                 case RuleResultType.Safe:
                     break;
@@ -460,6 +502,9 @@ public class GameManager : MonoBehaviour
         // Check if this reset qualifies for low-punishment next-run penalty
         int currentPunishments = punisher.GetActivePunishmentCount();
         lowPunishmentRestart = currentPunishments < 3;
+
+        playedMonologue = false;
+        endingDoorsClosed = false;
 
         // Reset game state tracking
         totalRoomsVisited = 1;
