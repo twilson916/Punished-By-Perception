@@ -21,9 +21,9 @@ public class AudioManager : MonoBehaviour
         Discover, //
         Eerie, //
         Shop, //
-        QuizFail,
+        QuizFail, //
         NewRound, //
-        LockedDoor
+        LockedDoor //
     }
 
     [Serializable]

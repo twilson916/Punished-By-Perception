@@ -44,18 +44,18 @@ public class GameManager : MonoBehaviour
     private const int RECENT_RULES_HISTORY = 10;
 
     // Meta-rule game state
-    private int challengeFailCount = 0;
-    private int challengeCount = 0;        // total challenges encountered (for "every 3rd" rule)
-    private bool lowPunishmentRestart = false; // set during reset, checked on next run start
+    private int questionCount = 0;
+    private bool lowPunishmentRestart = false;
     private bool hasPunishmentShield = false;
+    private bool awaitingQuizUnlock = false; // true when a room-entry quiz is blocking door unlock
 
     // Constants
     private const int ROOMS_TO_WIN = 20;
     private const int MAX_PUNISHMENTS = 7;
-    private const int MAX_CHALLENGE_FAILS = 3;
     private const int CHALLENGE_ROOM_INTERVAL = 3;
     private const int QUIZ_ROOM_INTERVAL = 7;
     private const int SHOP_ROOM_INTERVAL = 9;
+    private const float FINAL_QUIZ_PASS_THRESHOLD = 0.79f; // minimum correct fraction to pass a FinalQuiz session
     //private const int INVERT_ROOM_INTERVAL = 6; //hardcoded into meta rule
 
     [SerializeField] private AudioClip monologue;
@@ -186,8 +186,12 @@ public class GameManager : MonoBehaviour
         //Turn off any shops that mightve been in room three
         sceneRooms[(int)RoomNumber.Three].SetShopVisible(false);
 
-        // Unlock room 1 directly — OnRoomEntry(One) will early-return since currentRoom is already One
-        sceneRooms[(int)RoomNumber.One].SetLockDoors(false);
+        // Drain room 3's quiz — questions were pre-queued to room 1 so they'll show there instead
+        sceneRooms[(int)RoomNumber.Three].ResetQuiz();
+
+        // Unlock room 1 directly — unless a quiz is waiting there
+        if (!awaitingQuizUnlock)
+            sceneRooms[(int)RoomNumber.One].SetLockDoors(false);
 
         currentRoom = RoomNumber.One;
     }
@@ -300,14 +304,22 @@ public class GameManager : MonoBehaviour
         // Room interval events
         if (totalRoomsVisited % CHALLENGE_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
-            // TODO: trigger additional challenge (teammate implementing) FIXME
-            Debug.Log("[GameManager] 3rd room — additional challenge!");
+            Debug.Log("[GameManager] Challenge room — queueing visual challenge.");
+            // TODO: generate and enqueue a VisualChallenge question
+            // QuizQuestion q = ChallengeGenerator.Generate(difficulty: totalRoomsVisited / 3);
+            // sceneRooms[(int)newRoomNum].EnqueueQuestion(q);
+            // if (newRoomNum == RoomNumber.Three) sceneRooms[(int)RoomNumber.One].EnqueueQuestion(q);
+            // awaitingQuizUnlock = true;
         }
 
         if (totalRoomsVisited % QUIZ_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
-            // TODO: trigger quiz (teammate implementing) FIXME
-            Debug.Log("[GameManager] 7th room — quiz time!");
+            Debug.Log("[GameManager] Quiz room — queueing meta quiz question.");
+            // TODO: generate and enqueue a Quiz question
+            // QuizQuestion q = QuizGenerator.Generate(totalRoomsVisited);
+            // sceneRooms[(int)newRoomNum].EnqueueQuestion(q);
+            // if (newRoomNum == RoomNumber.Three) sceneRooms[(int)RoomNumber.One].EnqueueQuestion(q);
+            // awaitingQuizUnlock = true;
         }
 
         if (totalRoomsVisited % SHOP_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
@@ -323,20 +335,12 @@ public class GameManager : MonoBehaviour
 
 
         // Punish for held objects (mug logic)
-        if (hasPunishmentShield && _heldObjects.Count > 0)
-        {
-            punisher.Punish(_heldObjects.Count - 1);
-            hasPunishmentShield = false;
-        }
-        else
-        {
-            punisher.Punish(_heldObjects.Count);
-        }
+        ApplyPunishment(_heldObjects.Count);
 
-        // Unlock new room's doors
-        if (newRoomNum != RoomNumber.Three)
+        // Unlock new room's doors — held back if a quiz was just queued
+        if (newRoomNum != RoomNumber.Three && !awaitingQuizUnlock)
         {
-            sceneRooms[(int)newRoomNum].SetLockDoors(false); //FIXME FIXME FIXME only unlock if no challenge or quiz
+            sceneRooms[(int)newRoomNum].SetLockDoors(false);
         }
         currentRoom = newRoomNum;
     }
@@ -369,30 +373,15 @@ public class GameManager : MonoBehaviour
 
             case RuleResultType.Punishment:
                 Debug.Log($"[GameManager] PUNISHMENT — Rule: {door.ruleName}");
-                if (hasPunishmentShield)
-                {
-                    hasPunishmentShield = false;
-                    Debug.Log("[GameManager] Shield absorbed!");
-                }
-                else
-                {
-                    punisher.Punish(1);
-
-                    // Check 5-punishment auto reset
-                    int activePunishments = punisher.GetActivePunishmentCount();
-                    if (activePunishments >= MAX_PUNISHMENTS)
-                    {
-                        Debug.Log("[GameManager] 5 punishments reached — auto reset!");
-                        ResetRun();
-                        return;
-                    }
-                }
+                ApplyPunishment(1);
                 break;
 
             case RuleResultType.Challenge:
                 Debug.Log($"[GameManager] CHALLENGE — Rule: {door.ruleName}");
-                // TODO: Trigger your challenge/quiz system here FIXME
-                // e.g. ChallengeManager.Instance.StartChallenge();
+                // TODO: generate and enqueue a VisualChallenge question for this door
+                // QuizQuestion q = ChallengeGenerator.Generate(difficulty: ...);
+                // sceneRooms[(int)currentRoom].EnqueueQuestion(q);
+                // awaitingQuizUnlock = true;
                 break;
 
             case RuleResultType.Random:
@@ -411,26 +400,106 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void OnChallengeComplete(bool success) //FIXME wire up to challenges when added
+    // Called by QuizUI before resolving a VisualChallenge answer.
+    // Increments questionCount and returns the effective correct index —
+    // on every 3rd challenge, index 0 (left/A) is correct regardless of the question's actual answer.
+    public int GetEffectiveCorrectIndex(QuizQuestion q)
     {
-        challengeCount++;
-
-        if (success)
+        questionCount++;
+        if (questionCount % 3 == 0)
         {
-            hasPunishmentShield = true;
-            Debug.Log("[GameManager] Challenge passed — shield acquired!");
+            Debug.Log($"[GameManager] Every 3rd question ({questionCount}) — left answer override active.");
+            return 0;
+        }
+        return q.correctAnswerIndex;
+    }
+
+    // Called by QuizUI once the entire session queue is drained.
+    public void OnQuizSessionComplete()
+    {
+        if (awaitingQuizUnlock)
+        {
+            awaitingQuizUnlock = false;
+            sceneRooms[(int)currentRoom].SetLockDoors(false);
+        }
+    }
+
+    // Called by QuizUI after each non-FinalQuiz question resolves.
+    // wasCorrect and effect metadata live on the question object itself.
+    public void OnQuestionAnswered(QuizQuestion q)
+    {
+        if (q.wasCorrect)
+        {
+            switch (q.successEffect)
+            {
+                case QuizQuestion.SuccessEffect.PunishmentShield:
+                    hasPunishmentShield = true;
+                    Debug.Log("[GameManager] Quiz correct — shield acquired!");
+                    break;
+
+                case QuizQuestion.SuccessEffect.RevealRule:
+                    MetaRuleRegistry.Instance.DiscoverNextTrickyRule();
+                    Debug.Log("[GameManager] Quiz correct — revealed next tricky rule.");
+                    break;
+            }
         }
         else
         {
-            challengeFailCount++;
-            punisher.Punish(2); // double punishment for failure
-
-            if (challengeFailCount >= MAX_CHALLENGE_FAILS)
+            switch (q.failEffect)
             {
-                Debug.Log("[GameManager] 3 challenge fails — auto reset!");
-                ResetRun();
-                return;
+                case QuizQuestion.FailEffect.Punishment:
+                    ApplyPunishment(1);
+                    break;
+
+                case QuizQuestion.FailEffect.DoublePunishment:
+                    ApplyPunishment(2);
+                    break;
+
+                case QuizQuestion.FailEffect.TriplePunishment:
+                    ApplyPunishment(3);
+                    break;
             }
+        }
+    }
+
+    // Called by QuizUI after all FinalQuiz questions in a session resolve.
+    // Returns true if passed — QuizUI uses this for the results screen display.
+    public bool OnFinalQuizComplete(int correct, int total)
+    {
+        bool passed = (float)correct / (float)total >= FINAL_QUIZ_PASS_THRESHOLD;
+
+        if (passed)
+        {
+            Debug.Log($"[GameManager] FinalQuiz passed ({correct}/{total}) — entering fake ending.");
+            currentState = GameState.FakeEnding; // disables two-hand reset, player must complete the fake ending
+        }
+        else
+        {
+            Debug.Log($"[GameManager] FinalQuiz failed ({correct}/{total}) — double punishment.");
+            AudioManager.Play(AudioManager.SoundCategory.QuizFail);
+            ApplyPunishment(2);
+        }
+
+        return passed;
+    }
+
+    private void ApplyPunishment(int severity)
+    {
+        if (severity <= 0) return;
+
+        if (hasPunishmentShield)
+        {
+            hasPunishmentShield = false;
+            Debug.Log("[GameManager] Shield absorbed punishment!");
+            return;
+        }
+
+        punisher.Punish(severity);
+
+        if (punisher.GetActivePunishmentCount() >= MAX_PUNISHMENTS)
+        {
+            Debug.Log("[GameManager] Max punishments reached — auto reset!");
+            ResetRun();
         }
     }
 
@@ -454,7 +523,7 @@ public class GameManager : MonoBehaviour
         {
             case ShopUIController.ShopItem.Mulligan:
                 //Cost is 1 punish
-                punisher.Punish(1);
+                ApplyPunishment(1);
 
                 // Undo a random punishment (nothing is gained)
                 int removed = punisher.Unpunish(1);
@@ -466,7 +535,7 @@ public class GameManager : MonoBehaviour
 
             case ShopUIController.ShopItem.PunishmentShield:
                 //Cost is 1 punish
-                punisher.Punish(1);
+                ApplyPunishment(1);
 
                 //Then they get a shield (nothing is gained)
                 hasPunishmentShield = true;
@@ -475,7 +544,7 @@ public class GameManager : MonoBehaviour
 
             case ShopUIController.ShopItem.RulebookSilver:
                 //Cost is 1 punish
-                punisher.Punish(1);
+                ApplyPunishment(1);
 
                 MetaRuleRegistry.Instance.DiscoverNextFactualRule();
                 Debug.Log("[GameManager] Silver rulebook purchased!");
@@ -483,12 +552,12 @@ public class GameManager : MonoBehaviour
 
             case ShopUIController.ShopItem.RulebookGold:
                 //Cost is 1 punish
-                punisher.Punish(1);
+                ApplyPunishment(1);
 
-                //FIXME FIXME tricky rules require the user to answer a quiz
-                //enqueue question then on challenge complete feedback give them the factual hint as follows...
-                //MetaRuleRegistry.Instance.DiscoverNextFactualRule();
-                Debug.Log("[GameManager] Gold rulebook purchased!");
+                // TODO: build/select a Quiz question with successEffect = RevealRule, then: ///FIXME
+                // q.revealRuleName = MetaRuleRegistry.Instance.DiscoverNextTrickyRule();
+                // sceneRooms[(int)currentRoom].EnqueueQuestion(q);
+                Debug.Log("[GameManager] Gold rulebook purchased — quiz incoming.");
                 break;
         }
     }
@@ -517,8 +586,7 @@ public class GameManager : MonoBehaviour
         recentChosenRules.Clear();
         hasPunishmentShield = false;
 
-        challengeFailCount = 0;
-        challengeCount = 0;
+        questionCount = 0;
 
         // Reset held objects
         _heldObjects.Clear();
@@ -533,13 +601,14 @@ public class GameManager : MonoBehaviour
         roomConfigs.Clear();
 
         // Close all doors in all rooms
+        awaitingQuizUnlock = false;
+
         foreach (var room in sceneRooms)
         {
             room.CloseAllDoors();
             room.SetLockDoors(true);
             room.SetShopVisible(false);
-
-            //FIXME FIXME FIXME reset all quiz windows
+            room.ResetQuiz();
         }
 
         // Rebuild rooms fresh

@@ -11,6 +11,7 @@ public class RoomController : MonoBehaviour
     public DoorController[] doors;
     [SerializeField] private GameObject shopCanvas;
     [SerializeField] private ShopUIController shopUI;
+    [SerializeField] private QuizUI quizUI;
 
     [Header("Environment Objects")]
     public Transform plantLeft;
@@ -81,6 +82,9 @@ public class RoomController : MonoBehaviour
             door.CloseDoor();
         }
     }
+
+    public void EnqueueQuestion(QuizQuestion q) => quizUI?.EnqueueQuestion(q);
+    public void ResetQuiz() => quizUI?.ResetForNewRun();
 
     public void SetShopVisible(bool visible)
     {

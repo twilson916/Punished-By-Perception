@@ -17,8 +17,7 @@ public enum MetaRuleName
     Every7thQuiz,
     Every9thShop,
     TwentyRoomsToWin,
-    FivePunishmentsReset,
-    ThreeFailsReset,
+    PunishmentsReset,
     ChallengeShield,
     OneHandRemovesPunishments,
     EmptyShopPunishes,
@@ -130,12 +129,10 @@ public class MetaRuleRegistry : MonoBehaviour
             new MetaRuleDefinition(MetaRuleName.TwentyRoomsToWin,
                 "To complete the game you must pass through 20 rooms",
                 MetaRuleCategory.Factual),
-            new MetaRuleDefinition(MetaRuleName.FivePunishmentsReset,
-                "Hitting 5 active punishments automatically resets your run",
+            new MetaRuleDefinition(MetaRuleName.PunishmentsReset,
+                "Hitting 7 active punishments automatically resets your run",
                 MetaRuleCategory.Factual),
-            new MetaRuleDefinition(MetaRuleName.ThreeFailsReset,
-                "Failing 3 challenges automatically resets your run",
-                MetaRuleCategory.Factual),
+
             new MetaRuleDefinition(MetaRuleName.ChallengeShield,
                 "Completing a challenge gives you a shield that can absorb 1 punishment",
                 MetaRuleCategory.Factual),
@@ -166,7 +163,7 @@ public class MetaRuleRegistry : MonoBehaviour
                 "Every 6th room has inverted logic, ie all safe rooms are punishments and vice versa",
                 MetaRuleCategory.Tricky),
             new MetaRuleDefinition(MetaRuleName.Every3rdAnswerLeft,
-                "Every 3rd challenge requires you to answer the left most option regardless of the true answer",
+                "Every 3rd question requires you to answer the left most option regardless of the true answer",
                 MetaRuleCategory.Tricky),
             new MetaRuleDefinition(MetaRuleName.OneHandWipesSave,
                 "Touching the floor with only one hand wipes your save lmao!!!",
@@ -192,12 +189,15 @@ public class MetaRuleRegistry : MonoBehaviour
             punisher.Punish(1);
     }
 
-    // Discovers the next undiscovered Tricky meta rule in order
+    // Discovers the next undiscovered Tricky meta rule in order.
+    // If none are left, punishes the player.
     public void DiscoverNextTrickyRule()
     {
         var next = allMetaRules.FirstOrDefault(r => r.category == MetaRuleCategory.Tricky && !r.isDiscovered);
         if (next != null)
             DiscoverMetaRule(next.name);
+        else
+            punisher.Punish(1);
     }
 
     private void DiscoverMetaRule(MetaRuleName name)
