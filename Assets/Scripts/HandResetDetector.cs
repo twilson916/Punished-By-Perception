@@ -12,21 +12,19 @@ public class HandResetDetector : MonoBehaviour
     public Transform rightHand;
 
     [Header("Settings")]
-    [Tooltip("Y position threshold — hands must be below this to count as 'on the floor'")]
+    [Tooltip("Y position threshold - hands must be below this to count as 'on the floor'")]
     public float floorThreshold = 0.15f;
     [Tooltip("How long both hands must stay down")]
     public float holdDuration = 3f;
     [Tooltip("Cooldown after any reset before another can trigger")]
     public float resetCooldown = 3f;
-    [Tooltip("Hands at origin means tracking lost -> ignore")]
-    public float trackingLostThreshold = 0.001f;
 
     // Hold timers
     private float holdBothTimer = 0f;
     private float holdOneTimer = 0f;
     private bool resetTriggered = false;
 
-    // Stale detection — catches frozen/idle controllers
+    // Stale detection - catches frozen/idle controllers
     private Vector3 lastLeftPos;
     private Vector3 lastRightPos;
     private float leftStaleTime;
@@ -34,7 +32,7 @@ public class HandResetDetector : MonoBehaviour
     private const float STALE_THRESHOLD = 0.5f;
     private const float MOVE_EPSILON = 1e-8f;
 
-    // Transition tracking — prevents carry-over from lost tracking
+    // Transition tracking - prevents carry-over from lost tracking
     private bool wasLeftDown;
     private bool wasRightDown;
 
@@ -43,8 +41,8 @@ public class HandResetDetector : MonoBehaviour
         if (GameManager.Instance.currentState == GameState.Ending) return;
         if (resetTriggered) return;
 
-        bool leftValid = IsHandTracked(leftHand) && !IsHandStale(leftHand, ref lastLeftPos, ref leftStaleTime);
-        bool rightValid = IsHandTracked(rightHand) && !IsHandStale(rightHand, ref lastRightPos, ref rightStaleTime);
+        bool leftValid = IsHandTracked(leftHand, OVRInput.Controller.LTouch, OVRInput.Controller.LHand) && !IsHandStale(leftHand, ref lastLeftPos, ref leftStaleTime);
+        bool rightValid = IsHandTracked(rightHand, OVRInput.Controller.RTouch, OVRInput.Controller.RHand) && !IsHandStale(rightHand, ref lastRightPos, ref rightStaleTime);
 
         bool leftDown = leftValid && leftHand.position.y <= floorThreshold;
         bool rightDown = rightValid && rightHand.position.y <= floorThreshold;
@@ -95,12 +93,16 @@ public class HandResetDetector : MonoBehaviour
         }
     }
 
-    private bool IsHandTracked(Transform hand)
+    private bool IsHandTracked(Transform hand, OVRInput.Controller touchController, OVRInput.Controller handController)
     {
         if (hand == null) return false;
         if (!hand.gameObject.activeInHierarchy) return false;
-        if (hand.localPosition.sqrMagnitude < trackingLostThreshold * trackingLostThreshold) return false;
-        return true;
+
+        bool b1 = OVRInput.GetControllerPositionTracked(touchController);
+        bool b2 = OVRInput.GetControllerPositionTracked(handController);
+
+        return OVRInput.GetControllerPositionTracked(touchController)
+            || OVRInput.GetControllerPositionTracked(handController);
     }
 
     private bool IsHandStale(Transform hand, ref Vector3 lastPos, ref float staleTime)
@@ -108,7 +110,7 @@ public class HandResetDetector : MonoBehaviour
         float delta = (hand.position - lastPos).sqrMagnitude;
         lastPos = hand.position;
 
-        if (delta < MOVE_EPSILON * MOVE_EPSILON)
+        if (delta < MOVE_EPSILON)
         {
             staleTime += Time.deltaTime;
             return staleTime >= STALE_THRESHOLD;
