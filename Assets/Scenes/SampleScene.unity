@@ -2051,11 +2051,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 2478cc0c10af2454b8fe0b7687a4364e, type: 3}
     - {fileID: 8300000, guid: 9f88389eb8fb85c4e80fb5e15d956c0c, type: 3}
     volume: 1
-  - category: 12
+  - category: 15
     clips:
     - {fileID: 8300000, guid: 45e9e8246424f3942afe6ae6504d65fa, type: 3}
     volume: 1
-  - category: 13
+  - category: 16
     clips:
     - {fileID: 8300000, guid: aa73ea343525d8f4daeccb4a1b415c76, type: 3}
     - {fileID: 8300000, guid: 73339de02080af7449987a6eae4f5833, type: 3}
@@ -2064,6 +2064,18 @@ MonoBehaviour:
     - {fileID: 8300000, guid: a1e04d966df46634989e4b9bc75dc8d2, type: 3}
     - {fileID: 8300000, guid: 4094d522cb8c96c4297bb212a2ccfa19, type: 3}
     - {fileID: 8300000, guid: 48268f34f3822044f993c2f67aaaf284, type: 3}
+    volume: 1
+  - category: 12
+    clips:
+    - {fileID: 8300000, guid: 237ed96b221d5f74d85a1379ddf48b6f, type: 3}
+    volume: 1
+  - category: 13
+    clips:
+    - {fileID: 8300000, guid: 2256011e5fb6e9f4eaca6fcc83f32486, type: 3}
+    volume: 1
+  - category: 14
+    clips:
+    - {fileID: 8300000, guid: 92daeb4f1022ae04db10e150f5ea52e9, type: 3}
     volume: 1
   audioSourcePoolSize: 8
 --- !u!4 &252473468
@@ -4745,7 +4757,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b9cd4fdd404e7a4586d92d5f22b39f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  quizUIContainer: {fileID: 669589482}
+  canvasGroup: {fileID: 0}
   startScreen: {fileID: 1020490154}
   questionScreen: {fileID: 1454344944}
   resultScreen: {fileID: 1011781065}
@@ -4766,6 +4778,7 @@ MonoBehaviour:
   resultDisplayDuration: 2
   finalResultsText: {fileID: 1841402161}
   finalDismissButton: {fileID: 1317728210}
+  finalPassText: TODO add final pass text
 --- !u!114 &669589486
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7542,6 +7555,7 @@ MonoBehaviour:
   punisher: {fileID: 1864776083}
   spawnPoint: {fileID: 216421202}
   detector: {fileID: 1782983765}
+  difficulty: 0
   monologue: {fileID: 8300000, guid: d880fcf0b8bc3b7438029c96fafbca53, type: 3}
   playerTransform: {fileID: 2100508860}
 --- !u!82 &1078216552
@@ -8258,6 +8272,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 18489350}
     m_Modifications:
+    - target: {fileID: 87850325270913972, guid: 0a7d2469f24041c4284c66706f84c45e,
+        type: 3}
+      propertyPath: _maxRayLength
+      value: 1.5
+      objectReference: {fileID: 0}
     - target: {fileID: 435407831072319256, guid: 0a7d2469f24041c4284c66706f84c45e,
         type: 3}
       propertyPath: _leftEyeAnchor
@@ -8292,6 +8311,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Height
       value: 1.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4080277042268158424, guid: 0a7d2469f24041c4284c66706f84c45e,
+        type: 3}
+      propertyPath: _maxRayLength
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 4148778239110795873, guid: 0a7d2469f24041c4284c66706f84c45e,
         type: 3}
@@ -8348,6 +8372,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5132080673206253129, guid: 0a7d2469f24041c4284c66706f84c45e,
+        type: 3}
+      propertyPath: _maxRayLength
+      value: 1.5
+      objectReference: {fileID: 0}
     - target: {fileID: 5649874818017284984, guid: 0a7d2469f24041c4284c66706f84c45e,
         type: 3}
       propertyPath: m_IsActive
@@ -8397,6 +8426,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124509533193169957, guid: 0a7d2469f24041c4284c66706f84c45e,
+        type: 3}
+      propertyPath: _maxRayLength
+      value: 1.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -11409,7 +11443,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1454344945
 RectTransform:
   m_ObjectHideFlags: 0
@@ -17161,6 +17195,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rulebookScrollView: {fileID: 1732689922}
+  rulebookPanel: {fileID: 1187842076}
   rulesCSV: {fileID: 4900000, guid: 3617be46506924b4c9106e33dcac600c, type: 3}
 --- !u!4 &2068903136
 Transform:

@@ -85,6 +85,7 @@ public class RoomController : MonoBehaviour
 
     public void EnqueueQuestion(QuizQuestion q) => quizUI?.EnqueueQuestion(q);
     public void ResetQuiz() => quizUI?.ResetForNewRun();
+    public bool IsQuizPending() => quizUI != null && quizUI.HasPendingSession();
 
     public void SetShopVisible(bool visible)
     {
@@ -96,20 +97,12 @@ public class RoomController : MonoBehaviour
         shopCanvas.SetActive(visible);
     }
 
-    private void ChangeWallColor(Color newColor)
-    {
-        // Change material color, swap props, etc.
-    }
-
     public void ChangeRoomColor(RoomColors colors)
     {
-        //Change door and handle colors
         for(int i = 0; i < 3; i++)
         {
             doors[i].ChangeDoorColor(colors.doors[i], colors.doorHandles[i]);
         }
-
-        //TODO add logic for other colors
     }
 
     public void ApplyEnvironmentModifiers(RoomConfig.EnvironmentState env)

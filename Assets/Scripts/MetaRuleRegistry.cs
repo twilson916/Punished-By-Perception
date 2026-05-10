@@ -145,7 +145,7 @@ public class MetaRuleRegistry : MonoBehaviour
 
             // Tricky
             new MetaRuleDefinition(MetaRuleName.PlantsSwapped,
-                "If the plants on the table are swapped all safe rooms are punishments and all challenges are random",
+                "If the plants on the table are swapped all safe rooms are punishments, all challenges are random, and all random rooms are safe",
                 MetaRuleCategory.Tricky),
             new MetaRuleDefinition(MetaRuleName.LeftChairOut,
                 "If the left chair is pulled out slightly then all safe rooms are punishments and all random doors are safe",

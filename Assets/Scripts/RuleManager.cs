@@ -16,6 +16,8 @@ public class RuleManager : MonoBehaviour
 
     [Header("UI Reference")]
     public ScrollRect rulebookScrollView;
+    [Tooltip("Root GameObject of the entire rulebook panel — drag the canvas/panel root here")]
+    [SerializeField] private GameObject rulebookPanel;
 
     [Header("Text Assets")]
     public TextAsset rulesCSV;
@@ -57,6 +59,12 @@ public class RuleManager : MonoBehaviour
     // ─────────────────────────────────────────────
     //  PUBLIC ACCESSORS (used by RoomConfigurator via GameManager)
     // ─────────────────────────────────────────────
+
+    // Show or hide the entire rulebook panel (used by the gauntlet for Q5).
+    public void SetRulebookVisible(bool visible)
+    {
+        if (rulebookPanel != null) rulebookPanel.SetActive(visible);
+    }
 
     // Returns the full list of parsed GameRule objects.
     public List<GameRule> GetAllRules() => allRules;

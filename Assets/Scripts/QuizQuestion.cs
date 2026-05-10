@@ -22,6 +22,11 @@ public class QuizQuestion
     public SuccessEffect successEffect = SuccessEffect.None;
     public FailEffect failEffect = FailEffect.None;
 
+    // FinalQuiz: room config to apply visually before this question is shown
+    public RoomConfig gauntletRoomConfig;
+    // FinalQuiz Q5: hides the rulebook UI while this question is active
+    public bool hideRulebook;
+
     // Set at runtime by QuizUI
     public bool wasCorrect;
     public bool wasAnswered; // false means timed out

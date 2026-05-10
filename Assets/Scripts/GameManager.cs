@@ -48,14 +48,20 @@ public class GameManager : MonoBehaviour
     private bool lowPunishmentRestart = false;
     private bool hasPunishmentShield = false;
     private bool awaitingQuizUnlock = false; // true when a room-entry quiz is blocking door unlock
+    private bool gauntletFired = false;      // prevents the gauntlet from triggering more than once per run
+
+    // Difficulty
+    public enum DifficultyMode { Normal, Child, Baby, Nightmare }
+    public DifficultyMode difficulty = DifficultyMode.Normal;
 
     // Constants
-    private const int ROOMS_TO_WIN = 20;
+    private const int ROOMS_TO_WIN = 5;//20; //FIXME testing only
     private const int MAX_PUNISHMENTS = 7;
     private const int CHALLENGE_ROOM_INTERVAL = 3;
     private const int QUIZ_ROOM_INTERVAL = 7;
     private const int SHOP_ROOM_INTERVAL = 9;
-    private const float FINAL_QUIZ_PASS_THRESHOLD = 0.79f; // minimum correct fraction to pass a FinalQuiz session
+    private const float FINAL_QUIZ_PASS_THRESHOLD = 0.79f;
+    private const float FINAL_QUIZ_PASS_THRESHOLD_BABY = 0.49f;
     //private const int INVERT_ROOM_INTERVAL = 6; //hardcoded into meta rule
 
     [SerializeField] private AudioClip monologue;
@@ -186,7 +192,18 @@ public class GameManager : MonoBehaviour
         //Turn off any shops that mightve been in room three
         sceneRooms[(int)RoomNumber.Three].SetShopVisible(false);
 
-        // Drain room 3's quiz — questions were pre-queued to room 1 so they'll show there instead
+        // The quiz window lives in Room 1's physical space — the player cannot reach it from Room 3
+        // because the rooms are physically separated and the teleport fires as soon as they step in.
+        // So in practice the Room 3 quiz never completes before the teleport; the Room 1 copy is
+        // always the one the player answers. The IsQuizPending check is a belt-and-suspenders guard
+        // for the edge case where that assumption breaks (e.g. a delayed teleport trigger):
+        // if Room 3's quiz somehow completed already, clear Room 1's duplicate so it doesn't show twice.
+        if (!sceneRooms[(int)RoomNumber.Three].IsQuizPending() && awaitingQuizUnlock)
+        {
+            sceneRooms[(int)RoomNumber.One].ResetQuiz();
+            awaitingQuizUnlock = false;
+        }
+
         sceneRooms[(int)RoomNumber.Three].ResetQuiz();
 
         // Unlock room 1 directly — unless a quiz is waiting there
@@ -242,7 +259,7 @@ public class GameManager : MonoBehaviour
             }
 
             RuleResultType resolvedResult = chosenDoor.ResolveResult();
-            ProcessDoorResult(resolvedResult, chosenDoor, config);
+            ProcessDoorResult(resolvedResult, chosenDoor, config, fromRoom);
         }
     }
 
@@ -293,33 +310,50 @@ public class GameManager : MonoBehaviour
 
 
 
-        // Check win condition
-        if (totalRoomsVisited >= ROOMS_TO_WIN && newRoomNum != RoomNumber.One)
+        // Check win condition — queue the final gauntlet and lock doors until it's complete
+        if (!gauntletFired && totalRoomsVisited >= ROOMS_TO_WIN)
         {
-            // TODO: trigger win state FIXME
-            Debug.Log("[GameManager] YOU WIN!");
+            gauntletFired = true;
+            currentRoom = newRoomNum; // must be set before the early return so OnQuizSessionComplete unlocks the right room
+            Debug.Log("[GameManager] Room 20 reached — queueing final gauntlet.");
+            var gauntletQs = FinalGauntletGenerator.Generate(
+                RuleManager.Instance.GetAllRules(),
+                RuleManager.Instance.GetDiscoveredRuleNames(),
+                configurator);
+            foreach (var gq in gauntletQs)
+            {
+                sceneRooms[(int)newRoomNum].EnqueueQuestion(gq);
+                if (newRoomNum == RoomNumber.Three)
+                    sceneRooms[(int)RoomNumber.One].EnqueueQuestion(gq); // mirror to Room 1 for after teleport
+            }
+            awaitingQuizUnlock = true;
             return;
         }
 
-        // Room interval events
+        // Room interval events.
+        // Room 3 and Room 1 are the same physical space — the player teleports immediately on entry.
+        // We queue to the current room (Room 3) so the quiz can appear there, and also mirror
+        // it to Room 1 as a backup. OnLoopTeleport checks whether Room 3's quiz was already
+        // answered and clears the Room 1 duplicate if so; otherwise Room 1 shows it post-teleport.
         if (totalRoomsVisited % CHALLENGE_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
             Debug.Log("[GameManager] Challenge room — queueing visual challenge.");
-            // TODO: generate and enqueue a VisualChallenge question
-            // QuizQuestion q = ChallengeGenerator.Generate(difficulty: totalRoomsVisited / 3);
-            // sceneRooms[(int)newRoomNum].EnqueueQuestion(q);
-            // if (newRoomNum == RoomNumber.Three) sceneRooms[(int)RoomNumber.One].EnqueueQuestion(q);
-            // awaitingQuizUnlock = true;
+            int diff = Mathf.Clamp(totalRoomsVisited / 5 + 1, 1, 5);
+            var cq = ChallengeGenerator.Generate(diff);
+            sceneRooms[(int)newRoomNum].EnqueueQuestion(cq);
+            if (newRoomNum == RoomNumber.Three)
+                sceneRooms[(int)RoomNumber.One].EnqueueQuestion(cq); // mirror to Room 1 for after teleport
+            awaitingQuizUnlock = true;
         }
 
         if (totalRoomsVisited % QUIZ_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
             Debug.Log("[GameManager] Quiz room — queueing meta quiz question.");
-            // TODO: generate and enqueue a Quiz question
-            // QuizQuestion q = QuizGenerator.Generate(totalRoomsVisited);
-            // sceneRooms[(int)newRoomNum].EnqueueQuestion(q);
-            // if (newRoomNum == RoomNumber.Three) sceneRooms[(int)RoomNumber.One].EnqueueQuestion(q);
-            // awaitingQuizUnlock = true;
+            var qq = QuizGenerator.Generate();
+            sceneRooms[(int)newRoomNum].EnqueueQuestion(qq);
+            if (newRoomNum == RoomNumber.Three)
+                sceneRooms[(int)RoomNumber.One].EnqueueQuestion(qq); // mirror to Room 1 for after teleport
+            awaitingQuizUnlock = true;
         }
 
         if (totalRoomsVisited % SHOP_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
@@ -345,7 +379,7 @@ public class GameManager : MonoBehaviour
         currentRoom = newRoomNum;
     }
 
-    private void ProcessDoorResult(RuleResultType result, DoorConfig door, RoomConfig roomConfig)
+    private void ProcessDoorResult(RuleResultType result, DoorConfig door, RoomConfig roomConfig, RoomNumber fromRoom)
     {
         // ── Discover the rule ──
         // RuleManager handles parent-gating: if the parent isn't discovered,
@@ -378,10 +412,21 @@ public class GameManager : MonoBehaviour
 
             case RuleResultType.Challenge:
                 Debug.Log($"[GameManager] CHALLENGE — Rule: {door.ruleName}");
-                // TODO: generate and enqueue a VisualChallenge question for this door
-                // QuizQuestion q = ChallengeGenerator.Generate(difficulty: ...);
-                // sceneRooms[(int)currentRoom].EnqueueQuestion(q);
-                // awaitingQuizUnlock = true;
+                int cDiff = Mathf.Clamp(totalRoomsVisited / 5 + 1, 1, 5);
+                var challengeQ = ChallengeGenerator.Generate(cDiff);
+                // Route challenge to the next room so it blocks the player on entry.
+                // Apply the same Room 3/1 duality as all other enqueue sites.
+                RoomNumber nextRoom = fromRoom switch
+                {
+                    RoomNumber.One   => RoomNumber.Two,
+                    RoomNumber.Two   => RoomNumber.Three,
+                    RoomNumber.Three => RoomNumber.One,
+                    _                => RoomNumber.Two
+                };
+                sceneRooms[(int)nextRoom].EnqueueQuestion(challengeQ);
+                if (nextRoom == RoomNumber.Three)
+                    sceneRooms[(int)RoomNumber.One].EnqueueQuestion(challengeQ); // mirror to Room 1 for after teleport
+                awaitingQuizUnlock = true;
                 break;
 
             case RuleResultType.Random:
@@ -417,12 +462,21 @@ public class GameManager : MonoBehaviour
     // Called by QuizUI once the entire session queue is drained.
     public void OnQuizSessionComplete()
     {
+        RuleManager.Instance?.SetRulebookVisible(true); // restore if gauntlet Q5 hid it
         if (awaitingQuizUnlock)
         {
             awaitingQuizUnlock = false;
             sceneRooms[(int)currentRoom].SetLockDoors(false);
         }
     }
+
+    // ── Gauntlet / rulebook helpers ─────────────────────────────────────────
+
+    // Applies a gauntlet question's room config to the current room, changing door colors visually.
+    public void ApplyGauntletRoomConfig(RoomConfig config) => ApplyRoomConfig(currentRoom, config);
+
+    public void HideRulebook() => RuleManager.Instance?.SetRulebookVisible(false);
+    public void ShowRulebook() => RuleManager.Instance?.SetRulebookVisible(true);
 
     // Called by QuizUI after each non-FinalQuiz question resolves.
     // wasCorrect and effect metadata live on the question object itself.
@@ -466,7 +520,8 @@ public class GameManager : MonoBehaviour
     // Returns true if passed — QuizUI uses this for the results screen display.
     public bool OnFinalQuizComplete(int correct, int total)
     {
-        bool passed = (float)correct / (float)total >= FINAL_QUIZ_PASS_THRESHOLD;
+        float threshold = difficulty == DifficultyMode.Baby ? FINAL_QUIZ_PASS_THRESHOLD_BABY : FINAL_QUIZ_PASS_THRESHOLD;
+        bool passed = (float)correct / total >= threshold;
 
         if (passed)
         {
@@ -486,6 +541,25 @@ public class GameManager : MonoBehaviour
     private void ApplyPunishment(int severity)
     {
         if (severity <= 0) return;
+
+        // Child mode: all punishments capped at severity 1
+        if (difficulty == DifficultyMode.Child)
+            severity = 1;
+
+        // Nightmare mode: severity multiplied by 1.5, rounded up
+        if (difficulty == DifficultyMode.Nightmare)
+            severity = Mathf.CeilToInt(severity * 1.5f);
+
+        // Baby mode: severity 1, 50% chance of hitting — shield only consumed if it hits
+        if (difficulty == DifficultyMode.Baby)
+        {
+            severity = 1;
+            if (UnityEngine.Random.value >= 0.5f)
+            {
+                Debug.Log("[GameManager] Baby mode — punishment missed!");
+                return;
+            }
+        }
 
         if (hasPunishmentShield)
         {
@@ -554,9 +628,12 @@ public class GameManager : MonoBehaviour
                 //Cost is 1 punish
                 ApplyPunishment(1);
 
-                // TODO: build/select a Quiz question with successEffect = RevealRule, then: ///FIXME
-                // q.revealRuleName = MetaRuleRegistry.Instance.DiscoverNextTrickyRule();
-                // sceneRooms[(int)currentRoom].EnqueueQuestion(q);
+                // Enqueue a quiz — correct answer reveals the next tricky meta-rule.
+                // No awaitingQuizUnlock: this is a voluntary bonus, doors stay as-is.
+                var revealQ = QuizGenerator.GenerateRevealRule();
+                sceneRooms[(int)currentRoom].EnqueueQuestion(revealQ);
+                if (currentRoom == RoomNumber.Three)
+                    sceneRooms[(int)RoomNumber.One].EnqueueQuestion(revealQ); // mirror to Room 1 for after teleport
                 Debug.Log("[GameManager] Gold rulebook purchased — quiz incoming.");
                 break;
         }
@@ -587,6 +664,10 @@ public class GameManager : MonoBehaviour
         hasPunishmentShield = false;
 
         questionCount = 0;
+        gauntletFired = false;
+
+        // Ensure rulebook is visible (gauntlet Q5 may have hidden it)
+        RuleManager.Instance?.SetRulebookVisible(true);
 
         // Reset held objects
         _heldObjects.Clear();

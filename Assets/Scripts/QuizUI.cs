@@ -10,6 +10,10 @@ public class QuizUI : MonoBehaviour
     [Tooltip("CanvasGroup on the root quiz panel — used to show/hide without deactivating the GameObject.")]
     public CanvasGroup canvasGroup;
 
+    [Header("VR Interaction")]
+    [Tooltip("Drag the child object created by the Meta Interaction SDK (like the RayCanvasInteraction) here.")]
+    public GameObject interactionSDKObject;
+
     [Header("Screens")]
     [Tooltip("Shown before the quiz starts — contains the START button.")]
     public GameObject startScreen;
@@ -24,7 +28,10 @@ public class QuizUI : MonoBehaviour
     public Button startButton;
 
     [Header("Question Screen")]
-    public TextMeshProUGUI questionText;
+    [Tooltip("The large, centered text used when there is NO image.")]
+    public TextMeshProUGUI textOnlyQuestionText;
+    [Tooltip("The smaller, top-aligned text used when an image IS present.")]
+    public TextMeshProUGUI imageQuestionText;
     public Image questionImage;
     public Button buttonA, buttonB, buttonC, buttonD;
     [Tooltip("Top-right countdown text. Hidden automatically when the question has no timer.")]
@@ -62,6 +69,7 @@ public class QuizUI : MonoBehaviour
     private bool isFinalQuizSession = false;
 
     // ── Unity lifecycle ────────────────────────────────────────────────────────
+
     private void Start()
     {
         HideUI();
@@ -129,6 +137,7 @@ public class QuizUI : MonoBehaviour
         }
 
         sessionActive = false;
+        GameManager.Instance.ShowRulebook(); // restore if gauntlet Q5 hid it
         GameManager.Instance.OnQuizSessionComplete();
 
         if (isFinalQuizSession)
@@ -143,14 +152,55 @@ public class QuizUI : MonoBehaviour
         timedOut = false;
         pendingAnswerIndex = -1;
 
+        // Apply gauntlet room config before the question appears so the player
+        // sees the doors change color while still standing in the room.
+        if (q.gauntletRoomConfig != null)
+            GameManager.Instance.ApplyGauntletRoomConfig(q.gauntletRoomConfig);
+        if (q.hideRulebook)
+            GameManager.Instance.HideRulebook();
+
         SwitchScreen(questionScreen);
 
-        questionText.text = q.questionText;
+        AudioManager.Play(AudioManager.SoundCategory.QuizMusic);
 
-        if (questionImage != null)
+        if (q.artwork != null)
         {
-            questionImage.enabled = q.artwork != null;
-            if (q.artwork != null) questionImage.sprite = q.artwork;
+            // VISUAL CHALLENGE LAYOUT
+            if (questionImage != null)
+            {
+                questionImage.enabled = true;
+                questionImage.sprite = q.artwork;
+            }
+
+            if (imageQuestionText != null)
+            {
+                imageQuestionText.gameObject.SetActive(true);
+                imageQuestionText.text = q.questionText;
+            }
+
+            if (textOnlyQuestionText != null)
+            {
+                textOnlyQuestionText.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            // TEXT-ONLY QUIZ LAYOUT
+            if (questionImage != null)
+            {
+                questionImage.enabled = false;
+            }
+
+            if (textOnlyQuestionText != null)
+            {
+                textOnlyQuestionText.gameObject.SetActive(true);
+                textOnlyQuestionText.text = q.questionText;
+            }
+
+            if (imageQuestionText != null)
+            {
+                imageQuestionText.gameObject.SetActive(false);
+            }
         }
 
         buttonA.GetComponentInChildren<TextMeshProUGUI>().text = q.answerA;
@@ -159,6 +209,10 @@ public class QuizUI : MonoBehaviour
         buttonD.GetComponentInChildren<TextMeshProUGUI>().text = q.answerD;
         SetButtonsActive(true);
 
+        string[] answers = { q.answerA, q.answerB, q.answerC, q.answerD };
+        string correctText = answers[Mathf.Clamp(q.correctAnswerIndex, 0, 3)];
+        Debug.Log($"[QuizUI] ({q.questionType}) Correct: [{q.correctAnswerIndex}] {correctText}  |  NOTE: every 3rd question globally overrides to [0] Left regardless");
+
         if (gauntletScoreText != null)
         {
             gauntletScoreText.gameObject.SetActive(isFinalQuizSession);
@@ -166,6 +220,7 @@ public class QuizUI : MonoBehaviour
         }
 
         Coroutine timerRoutine = null;
+        if (GameManager.Instance.difficulty == GameManager.DifficultyMode.Baby) q.timeLimit = -1f;
         if (q.timeLimit > 0f && timerText != null)
         {
             timerText.gameObject.SetActive(true);
@@ -177,6 +232,8 @@ public class QuizUI : MonoBehaviour
         }
 
         yield return new WaitUntil(() => answerReceived || timedOut);
+
+        AudioManager.StopCategory(AudioManager.SoundCategory.QuizMusic);
 
         if (timerRoutine != null) StopCoroutine(timerRoutine);
         if (timerText != null) timerText.gameObject.SetActive(false);
@@ -200,11 +257,41 @@ public class QuizUI : MonoBehaviour
         if (resultImage != null)
             resultImage.sprite = timedOut ? timeoutMeme : (q.wasCorrect ? correctMeme : wrongMeme);
 
+        //Play meme sounds
+        if(timedOut)
+        {
+            AudioManager.Play(AudioManager.SoundCategory.QuizTimeout);
+        }
+        else if(q.wasCorrect)
+        {
+            AudioManager.Play(AudioManager.SoundCategory.QuizCorrect);
+        }
+        else
+        {
+            AudioManager.Play(AudioManager.SoundCategory.QuizFail);
+        }
+
         // Notify GameManager immediately for non-gauntlet questions
         if (q.questionType != QuizQuestion.QuestionType.FinalQuiz)
             GameManager.Instance.OnQuestionAnswered(q);
 
         yield return new WaitForSeconds(resultDisplayDuration);
+
+        //Stop meme sounds if still playing
+        AudioManager.StopCategory(AudioManager.SoundCategory.QuizTimeout);
+        AudioManager.StopCategory(AudioManager.SoundCategory.QuizCorrect);
+        AudioManager.StopCategory(AudioManager.SoundCategory.QuizFail);
+
+        // --- MEMORY CLEANUP: Destroy procedural textures ---
+        if (q.artwork != null)
+        {
+            if (q.artwork.texture != null)
+            {
+                Destroy(q.artwork.texture); // Frees the GPU texture memory
+            }
+            Destroy(q.artwork); // Frees the Sprite wrapper
+            q.artwork = null;   // Null the reference just in case
+        }
     }
 
     private IEnumerator RunTimer(float duration)
@@ -241,6 +328,16 @@ public class QuizUI : MonoBehaviour
         {
             finalDismissed = false;
             yield return new WaitUntil(() => finalDismissed);
+            if(passed)
+            {
+                RuleManager.Instance.ClearAllRulesAndSave();
+                MetaRuleRegistry.Instance.ClearAllMetaRules();
+                GameManager.Instance.ResetRun();
+            }
+            else
+            {
+                GameManager.Instance.ResetRun();
+            }
         }
         else
         {
@@ -289,6 +386,9 @@ public class QuizUI : MonoBehaviour
         canvasGroup.alpha = 1f;
         canvasGroup.interactable = true;
         canvasGroup.blocksRaycasts = true;
+
+        // --- Enable the Meta VR Laser interaction ---
+        if (interactionSDKObject != null) interactionSDKObject.SetActive(true);
     }
 
     private void HideUI()
@@ -298,7 +398,12 @@ public class QuizUI : MonoBehaviour
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
         sessionActive = false;
+
+        // --- Disable the Meta VR Laser interaction ---
+        if (interactionSDKObject != null) interactionSDKObject.SetActive(false);
     }
 
     private bool IsVisible() => canvasGroup != null && canvasGroup.alpha > 0f;
+
+    public bool HasPendingSession() => questionQueue.Count > 0 || sessionActive;
 }

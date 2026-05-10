@@ -22,6 +22,9 @@ public class AudioManager : MonoBehaviour
         Eerie, //
         Shop, //
         QuizFail, //
+        QuizCorrect, //
+        QuizTimeout, //
+        QuizMusic, //
         NewRound, //
         LockedDoor //
     }
@@ -144,5 +147,33 @@ public class AudioManager : MonoBehaviour
         var source = _pool[_poolIndex];
         _poolIndex = (_poolIndex + 1) % _pool.Length;
         return source;
+    }
+
+    public static void StopCategory(SoundCategory category)
+    {
+        if (Instance == null) return;
+        Instance.StopCategoryInternal(category);
+    }
+
+    private void StopCategoryInternal(SoundCategory category)
+    {
+        // Check if the category exists in our dictionary
+        if (!_lookup.TryGetValue(category, out var group)) return;
+
+        foreach (var source in _pool)
+        {
+            if (source.isPlaying && source.clip != null)
+            {
+                // If the currently playing clip is one of the clips in the target category, stop it
+                foreach (var groupClip in group.clips)
+                {
+                    if (source.clip == groupClip)
+                    {
+                        source.Stop();
+                        break; // Break the inner loop, move to the next AudioSource
+                    }
+                }
+            }
+        }
     }
 }
