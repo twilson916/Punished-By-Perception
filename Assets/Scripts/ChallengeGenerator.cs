@@ -107,7 +107,7 @@ public static class ChallengeGenerator
 
         var t = Pool[pick];
 
-        float timer = Mathf.Lerp(20f, 8f, (difficulty - 1) / 4f); //FIXME choose specific values for timer after playtesting
+        float timer = Mathf.Lerp(20f, 10f, (difficulty - 1) / 4f);
 
         Sprite art = null;
         int actualCorrectIndex = 0;
@@ -119,7 +119,7 @@ public static class ChallengeGenerator
 
             // Hermann Grid gets a shorter time limit
             if (t.visualGen == GenerateHermannGrid)
-                timer = Mathf.Lerp(10f, 4f, (difficulty - 1) / 4f);
+                timer = Mathf.Lerp(10f, 5f, (difficulty - 1) / 4f);
         }
 
         return new QuizQuestion

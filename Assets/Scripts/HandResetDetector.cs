@@ -24,14 +24,6 @@ public class HandResetDetector : MonoBehaviour
     private float holdOneTimer = 0f;
     private bool resetTriggered = false;
 
-    // Stale detection - catches frozen/idle controllers
-    private Vector3 lastLeftPos;
-    private Vector3 lastRightPos;
-    private float leftStaleTime;
-    private float rightStaleTime;
-    private const float STALE_THRESHOLD = 0.5f;
-    private const float MOVE_EPSILON = 1e-8f;
-
     // Transition tracking - prevents carry-over from lost tracking
     private bool wasLeftDown;
     private bool wasRightDown;
@@ -41,8 +33,8 @@ public class HandResetDetector : MonoBehaviour
         if (GameManager.Instance.currentState == GameState.Ending) return;
         if (resetTriggered) return;
 
-        bool leftValid = IsHandTracked(leftHand, OVRInput.Controller.LTouch, OVRInput.Controller.LHand) && !IsHandStale(leftHand, ref lastLeftPos, ref leftStaleTime);
-        bool rightValid = IsHandTracked(rightHand, OVRInput.Controller.RTouch, OVRInput.Controller.RHand) && !IsHandStale(rightHand, ref lastRightPos, ref rightStaleTime);
+        bool leftValid = IsHandTracked(leftHand, OVRInput.Controller.LTouch, OVRInput.Controller.LHand);
+        bool rightValid = IsHandTracked(rightHand, OVRInput.Controller.RTouch, OVRInput.Controller.RHand);
 
         bool leftDown = leftValid && leftHand.position.y <= floorThreshold;
         bool rightDown = rightValid && rightHand.position.y <= floorThreshold;
@@ -105,29 +97,12 @@ public class HandResetDetector : MonoBehaviour
             || OVRInput.GetControllerPositionTracked(handController);
     }
 
-    private bool IsHandStale(Transform hand, ref Vector3 lastPos, ref float staleTime)
-    {
-        float delta = (hand.position - lastPos).sqrMagnitude;
-        lastPos = hand.position;
-
-        if (delta < MOVE_EPSILON)
-        {
-            staleTime += Time.deltaTime;
-            return staleTime >= STALE_THRESHOLD;
-        }
-
-        staleTime = 0f;
-        return false;
-    }
-
     private IEnumerator CooldownRoutine()
     {
         yield return new WaitForSeconds(resetCooldown);
         resetTriggered = false;
         holdBothTimer = 0f;
         holdOneTimer = 0f;
-        leftStaleTime = 0f;
-        rightStaleTime = 0f;
         wasLeftDown = false;
         wasRightDown = false;
     }

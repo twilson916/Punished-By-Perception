@@ -118,7 +118,7 @@ public static class QuizGenerator
             customTimer = 10f,
         },
         new Template {
-            question   = "What is the color of the doors behind you when starting a new round?",
+            question   = "What is the color of the door handles behind you when starting a new round?",
             a = "grey", b = "gray", c = "black", d = "white",
             correct    = 1,  // B = gray
             onSuccess  = QuizQuestion.SuccessEffect.None,

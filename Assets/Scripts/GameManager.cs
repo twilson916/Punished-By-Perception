@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using MyGame.Resources;
 using Meta.WitAi;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -23,6 +24,11 @@ public class GameManager : MonoBehaviour
 
     [Tooltip("Drag in the hand reset detector")]
     public HandResetDetector detector;
+
+    [Tooltip("Drag in the difficulty ui")]
+    public GameObject diffUI;
+
+    [SerializeField] private TextMeshProUGUI trueEndText;
 
     // game state enum
     public GameState currentState { get; private set; }
@@ -51,8 +57,21 @@ public class GameManager : MonoBehaviour
     private bool gauntletFired = false;      // prevents the gauntlet from triggering more than once per run
 
     // Difficulty
-    public enum DifficultyMode { Normal, Child, Baby, Nightmare }
+    public enum DifficultyMode { Baby = 0, Child = 1, Normal = 2, Nightmare = 3 }
     public DifficultyMode difficulty = DifficultyMode.Normal;
+
+    public void SetDifficulty(int diff)
+    {
+        // Convert the integer from the button into our readable Enum
+        difficulty = (DifficultyMode)diff;
+
+        Debug.Log($"[GameManager] Difficulty locked in: {diff}");
+
+        diffUI.SetActive(false);
+
+        // Unlock first room's doors
+        sceneRooms[(int)currentRoom].SetLockDoors(false);
+    }
 
     // Constants
     private const int ROOMS_TO_WIN = 20;
@@ -111,9 +130,6 @@ public class GameManager : MonoBehaviour
         var room2Config = BuildNewRoomConfig();
         roomConfigs[RoomNumber.Two] = room2Config;
         ApplyRoomConfig(RoomNumber.Two, room2Config);
-
-        // Unlock first room's doors
-        sceneRooms[(int)currentRoom].SetLockDoors(false);
 
         audioSource = GetComponent<AudioSource>();
     }
@@ -223,10 +239,31 @@ public class GameManager : MonoBehaviour
 
         if (fromRoom == RoomNumber.MinusOne)
         {
-            currentState = GameState.Ending;
             sceneRooms[(int)RoomNumber.One].SetLockDoors(false); //no longer allowed to continue
             punisher.ResetAllPunishments();
-            return;
+
+            //depending on difficulty show different ending
+            if (difficulty <= DifficultyMode.Child)
+            {
+                trueEndText.text = "Child/Baby mode doesn't count!";
+                trueEndText.rectTransform.localRotation = Quaternion.Euler(0, 0, 0);
+            }
+            else if (difficulty == DifficultyMode.Normal)
+            {
+                currentState = GameState.Ending; //only legit runs get the final ending
+
+                trueEndText.text = "TODO:\nadd ending";
+                trueEndText.rectTransform.localRotation = Quaternion.Euler(0, 0, 45);
+            }
+            else if (difficulty == DifficultyMode.Nightmare)
+            {
+                currentState = GameState.Ending; //only legit runs get the final ending
+
+                trueEndText.text = "Holy SHIT nightmare mode completed!!!\nThat shouldn't be possible!";
+                trueEndText.rectTransform.localRotation = Quaternion.Euler(0, 0, 0);
+            }
+
+                return;
         }
 
         if (totalRoomsVisited == 1)
@@ -566,11 +603,12 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (hasPunishmentShield)
+        if (hasPunishmentShield && difficulty != DifficultyMode.Nightmare)
         {
             hasPunishmentShield = false;
-            Debug.Log("[GameManager] Shield absorbed punishment!");
-            return;
+            int absorbed = UnityEngine.Random.value < 0.5f ? 1 : 2; //blocks average of 1.5 severity
+            severity -= absorbed;
+            Debug.Log($"[GameManager] Shield absorbed {absorbed} punishment severity!");
         }
 
         punisher.Punish(severity);
@@ -653,6 +691,7 @@ public class GameManager : MonoBehaviour
         // Check if this reset qualifies for low-punishment next-run penalty
         int currentPunishments = punisher.GetActivePunishmentCount();
         lowPunishmentRestart = currentPunishments < 3;
+        Debug.Log($"Reseting with only {currentPunishments} punishments.");
 
         playedMonologue = false;
         endingDoorsClosed = false;

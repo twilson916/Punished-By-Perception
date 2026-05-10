@@ -8,7 +8,7 @@ public static class IllusionGenerator
 
     // --- THE MASTER RESOLUTION DIAL ---
     // 1 = 400px, 2 = 800px, 3 = 1200px, etc.
-    public static int RESOLUTION_SCALE = 3;
+    public static int RESOLUTION_SCALE = 2;
 
     // Helper to get difficulty percentage 0.0 (diff 1) to 1.0 (diff 5)
     private static float DiffT(int difficulty) => Mathf.Clamp01((difficulty - 1) / 4f);
@@ -18,8 +18,8 @@ public static class IllusionGenerator
         Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 350 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
-        // Diff 1 = 15px difference (obvious). Diff 5 = 2px difference (subtle).
-        int delta = Mathf.RoundToInt(Mathf.Lerp(12f, 2f, DiffT(difficulty)));
+        // Diff 1 = 10px difference (obvious). Diff 5 = 1px difference (subtle).
+        int delta = Mathf.RoundToInt(Mathf.Lerp(10f, 2f, DiffT(difficulty)));
         int[] yPos = { 260, 175, 90 }; // A (top), B (mid), C (bottom)
         int baseLen = 220;
         int halfBase = baseLen / 2;
@@ -57,8 +57,8 @@ public static class IllusionGenerator
 
         IllusionPainter.DrawRect(tex, 155, 0, 90, 420, grey);
 
-        // Diff 1 = 28px offset. Diff 5 = 6px offset.
-        int offsetAmt = Mathf.RoundToInt(Mathf.Lerp(28f, 6f, DiffT(difficulty)));
+        // Diff 1 = 15px offset. Diff 5 = 3px offset.
+        int offsetAmt = Mathf.RoundToInt(Mathf.Lerp(15f, 3f, DiffT(difficulty)));
         int[] yStarts = { 290, 185, 80 }; // A(top), B(mid), C(bottom)
         float slope = 0.22f;
 
@@ -107,8 +107,8 @@ public static class IllusionGenerator
             IllusionPainter.DrawLine(tex, 200, 200, 200 + dx, 200 + dy, darkBlue, 2);
         }
 
-        // Diff 1 = R:130 (very curved), Diff 5 = R:1800 (barely curved)
-        int R = Mathf.RoundToInt(Mathf.Lerp(130f, 1800f, DiffT(difficulty)));
+        // Diff 1 = R:500 (very curved), Diff 5 = R:15000 (barely curved)
+        int R = Mathf.RoundToInt(Mathf.Lerp(500f, 15000f, DiffT(difficulty)));
         int[] xPos = { 120, 200, 280 }; // A, B, C
 
         for (int i = 0; i < 3; i++)
@@ -120,12 +120,12 @@ public static class IllusionGenerator
             else
             {
                 // Curve them outward relative to center
-                int cx = (xPos[i] < 200) ? xPos[i] + R : (xPos[i] > 200 ? xPos[i] - R : xPos[i] + R);
+                int cx = (xPos[i] <= 200) ? xPos[i] + R : xPos[i] - R;
                 float maxAngle = Mathf.Asin(190f / R) * Mathf.Rad2Deg; // 190 is half height of line (390-10)/2
                 float startDeg = 180 - maxAngle;
                 float endDeg = 180 + maxAngle;
 
-                if (xPos[i] >= 200)
+                if (xPos[i] > 200)
                 {
                     startDeg = -maxAngle;
                     endDeg = maxAngle;
@@ -143,8 +143,8 @@ public static class IllusionGenerator
         Texture2D tex = new Texture2D(500 * RESOLUTION_SCALE, 200 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
-        // Diff 1 = 8px bump. Diff 5 = 2px bump.
-        int delta = Mathf.RoundToInt(Mathf.Lerp(8f, 2f, DiffT(difficulty)));
+        // Diff 1 = 5px bump. Diff 5 = 1px bump.
+        int delta = Mathf.RoundToInt(Mathf.Lerp(5f, 1f, DiffT(difficulty)));
         int[] xCenters = { 85, 250, 415 };
         int[] sRadius = { 10, 30, 10 };
         int[] rDist = { 38, 65, 38 };
@@ -202,8 +202,8 @@ public static class IllusionGenerator
         IllusionPainter.DrawLine(tex, 200, 30, 40, 420, black, 4);
         IllusionPainter.DrawLine(tex, 200, 30, 360, 420, black, 4);
 
-        // Diff 1 = 12px bump. Diff 5 = 2px bump.
-        int delta = Mathf.RoundToInt(Mathf.Lerp(12f, 2f, DiffT(difficulty)));
+        // Diff 1 = 10px bump. Diff 5 = 1px bump.
+        int delta = Mathf.RoundToInt(Mathf.Lerp(10f, 1f, DiffT(difficulty)));
         int[] yPos = { 350, 230, 110 }; // A(top visual, lower Y), B(mid), C(bottom visual, higher Y)
         int baseW = 110;
 
@@ -222,14 +222,15 @@ public static class IllusionGenerator
         Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 400 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
-        // Draw 5x5 black squares
-        for (int i = 0; i < 5; i++)
+        // Draw 7x7 black squares
+        for (int i = 0; i < 7; i++)
         {
-            for (int j = 0; j < 5; j++)
+            for (int j = 0; j < 7; j++)
             {
-                int x = 32 + i * 70;
-                int y = 32 + j * 70;
-                IllusionPainter.DrawRect(tex, x, y, 56, 56, black);
+                // 30px padding on the edges. Each step moves 50px (40px square + 10px gap)
+                int x = 30 + i * 50;
+                int y = 30 + j * 50;
+                IllusionPainter.DrawRect(tex, x, y, 40, 40, black);
             }
         }
 
@@ -237,16 +238,21 @@ public static class IllusionGenerator
 
         // Diff 1 = Medium Gray (Obvious against white)
         // Diff 5 = Very Light Gray (Practically invisible, perfectly mimics the optical illusion)
-        Color dotColor = Color.Lerp(new Color(0.6f, 0.6f, 0.6f), new Color(0.96f, 0.96f, 0.96f), DiffT(difficulty));
+        Color dotColor = Color.Lerp(new Color(0.7f, 0.7f, 0.7f), new Color(0.93f, 0.93f, 0.93f), DiffT(difficulty));
 
         // Place N dots randomly at intersections
         for (int n = 0; n < dotCount; n++)
         {
-            int rx = Random.Range(0, 4);
-            int ry = Random.Range(0, 4);
-            int cx = 32 + 56 + rx * 70 + 7; // +7 to center in the 14px gap
-            int cy = 32 + 56 + ry * 70 + 7;
-            IllusionPainter.DrawFilledCircle(tex, cx, cy, 6, dotColor);
+            // 7 squares mean there are 6 gaps (intersections) between them, so range is 0 to 5
+            int rx = Random.Range(0, 6);
+            int ry = Random.Range(0, 6);
+
+            // 30 (padding) + 40 (first square) + 5 (center of the 10px gap) = 75 baseline
+            int cx = 75 + rx * 50;
+            int cy = 75 + ry * 50;
+
+            // Scaled dot radius down from 6 to 4 so it neatly fits inside the smaller 10px gap
+            IllusionPainter.DrawFilledCircle(tex, cx, cy, 4, dotColor);
         }
 
         return IllusionPainter.MakeSprite(tex);
@@ -259,14 +265,14 @@ public static class IllusionGenerator
         IllusionPainter.Fill(tex, Color.white);
 
         // Difficulty Scaling: 
-        // Diff 1 = 15 degrees wider (very obvious)
-        // Diff 5 = 2.5 degrees wider (requires squinting to notice)
-        float bonusAngle = Mathf.Lerp(15f, 2.5f, DiffT(difficulty));
+        // Diff 1 = 5 degrees wider (very obvious)
+        // Diff 5 = 0.5 degrees wider (requires squinting to notice)
+        float bonusAngle = Mathf.Lerp(5f, 0.5f, DiffT(difficulty));
 
         // X-centers for the circles. Because the arcs curve to the left (like a 'C'), 
         // the mathematical centers are pushed far to the right side of the canvas.
         // This staggers them Left, Middle, and Right.
-        int[] cxOffsets = { 280, 360, 440 }; // A (Left), B (Middle), C (Right)
+        int[] cxOffsets = { 240, 360, 480 }; // A (Left), B (Middle), C (Right)
 
         int R = 200;        // Larger radius for the horizontal view
         int thickness = 40; // Slightly thicker

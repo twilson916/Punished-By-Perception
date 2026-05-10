@@ -40,7 +40,7 @@ public class RoomConfig
 {
     public DoorConfig[] doors = new DoorConfig[3]; // indexed by DoorPos (Left=0, Center=1, Right=2)
 
-    // Meta-rules that were active when this room was built (for debugging/display).
+    // Meta-rules that were active when this room was built
     public List<ActiveMetaRule> activeMetaRules = new List<ActiveMetaRule>();
 
     // Struct informing how the environment is to be setup or changed
