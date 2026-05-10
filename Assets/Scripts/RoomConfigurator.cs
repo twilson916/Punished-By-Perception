@@ -81,7 +81,7 @@ public class MetaRuleContext
 // then restores the original value — no logic duplication.
 public abstract class MetaRule
 {
-    protected float _probEnvActive = 0.33f;
+    protected float _probEnvActive = 0.4f;
 
     public abstract string Id          { get; }
     public abstract string Description { get; }
