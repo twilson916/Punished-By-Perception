@@ -38,6 +38,21 @@ public class PunishmentManager : MonoBehaviour
         { PunishmentType.AudioEerie, 1 }
     };
 
+    // The higher the number, the more likely it is to be chosen.
+    private static readonly Dictionary<PunishmentType, float> punishmentWeights = new()
+{
+    { PunishmentType.Saturation, 2.0f },
+    { PunishmentType.HueShift, 2.0f },
+    { PunishmentType.ColorTint, 1.0f },
+    { PunishmentType.Blur, 2.0f },
+    { PunishmentType.LensDistortion, 3.0f },
+    { PunishmentType.FilmGrain, 1.0f },
+    { PunishmentType.Vignette, 1.0f },
+    { PunishmentType.ChromaticAberration, 1.0f },
+    { PunishmentType.AudioLoud, 1.0f },
+    { PunishmentType.AudioEerie, 1.0f }
+};
+
     private Coroutine _loudCoroutine;
     private Coroutine _eerieCoroutine;
 
@@ -64,44 +79,44 @@ public class PunishmentManager : MonoBehaviour
     /// High-level: randomly distributes severity across available punishment types.
     /// Returns true if full severity was applied, false otherwise.
     /// If forcePunish is true, applies as much as possible.
+    /// 
     public bool Punish(int severity, bool forcePunish = false)
     {
         int remaining = severity;
 
-        // Get all types that aren't maxed and shuffle them
-        List<PunishmentType> available = punishmentValues
-            .Where(kvp => kvp.Value < maxStacks[kvp.Key])
-            .Select(kvp => kvp.Key)
-            .ToList();
-
-        Shuffle(available);
-
-        // Spread one unit across random available types
-        foreach (var type in available)
+        while (remaining > 0)
         {
-            if (remaining <= 0) break;
-
-            int applied = Punish(type, 1);
-            remaining -= applied;
-        }
-
-        // If force and still remaining, loop again on anything that has room
-        if (forcePunish && remaining > 0)
-        {
-            available = punishmentValues
+            // Get all types that aren't maxed out yet
+            var available = punishmentValues
                 .Where(kvp => kvp.Value < maxStacks[kvp.Key])
-                .Select(kvp => kvp.Key)
                 .ToList();
 
-            Shuffle(available);
+            if (available.Count == 0) break; // Everything is maxed out!
 
-            foreach (var type in available)
+            // Calculate the total weight of ONLY the available options
+            float totalWeight = available.Sum(kvp => punishmentWeights[kvp.Key]);
+            float randomVal = Random.Range(0f, totalWeight);
+
+            PunishmentType selectedType = available.First().Key; // Fallback
+
+            // Weighted selection (Let's go gambling!)
+            foreach (var kvp in available)
             {
-                if (remaining <= 0) break;
-
-                int applied = Punish(type, remaining);
-                remaining -= applied;
+                randomVal -= punishmentWeights[kvp.Key];
+                if (randomVal <= 0f)
+                {
+                    selectedType = kvp.Key;
+                    break;
+                }
             }
+
+            // Apply punishment
+            // If forcePunish is true and there's only one type left, dump all remaining severity into it.
+            // Otherwise, spread it out by applying 1 at a time.
+            int amountToApply = (forcePunish && available.Count == 1) ? remaining : 1;
+
+            int applied = Punish(selectedType, amountToApply);
+            remaining -= applied;
         }
 
         if (remaining > 0)
@@ -110,9 +125,7 @@ public class PunishmentManager : MonoBehaviour
             return false;
         }
 
-        // Play laughter on them getting punished
         AudioManager.Play(AudioManager.SoundCategory.Laughter);
-
         return true;
     }
 
