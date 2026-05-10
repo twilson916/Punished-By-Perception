@@ -423,6 +423,16 @@ public class RoomConfigurator
                     chosen.Apply(config, context);
                 }
             }
+
+            if (config.activeMetaRules.Count > 0)
+            {
+                string names = string.Join(", ", config.activeMetaRules.Select(m => m.ruleId));
+                UnityEngine.Debug.Log($"◆◆◆ META RULE FIRED (room {context.totalRoomsVisited}) ◆◆◆  {names}");
+            }
+            else
+            {
+                UnityEngine.Debug.Log($"[meta] room {context.totalRoomsVisited} — no rule fired this room");
+            }
         }
 
         // ── Shuffle door positions so wildcard isn't predictable ──

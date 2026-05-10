@@ -6,15 +6,19 @@ public static class IllusionGenerator
     private static Color white = Color.white;
     private static Color grey = Color.gray;
 
+    // --- THE MASTER RESOLUTION DIAL ---
+    // 1 = 400px, 2 = 800px, 3 = 1200px, etc.
+    public static int RESOLUTION_SCALE = 3;
+
     // Helper to get difficulty percentage 0.0 (diff 1) to 1.0 (diff 5)
     private static float DiffT(int difficulty) => Mathf.Clamp01((difficulty - 1) / 4f);
 
     public static Sprite MullerLyer(int difficulty, int answer)
     {
-        Texture2D tex = new Texture2D(400, 350, TextureFormat.RGBA32, false);
+        Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 350 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
-        // Diff 1 = 12px difference (obvious). Diff 5 = 2px difference (subtle).
+        // Diff 1 = 15px difference (obvious). Diff 5 = 2px difference (subtle).
         int delta = Mathf.RoundToInt(Mathf.Lerp(12f, 2f, DiffT(difficulty)));
         int[] yPos = { 260, 175, 90 }; // A (top), B (mid), C (bottom)
         int baseLen = 220;
@@ -48,7 +52,7 @@ public static class IllusionGenerator
 
     public static Sprite Poggendorff(int difficulty, int answer)
     {
-        Texture2D tex = new Texture2D(400, 420, TextureFormat.RGBA32, false);
+        Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 420 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
         IllusionPainter.DrawRect(tex, 155, 0, 90, 420, grey);
@@ -91,7 +95,7 @@ public static class IllusionGenerator
 
     public static Sprite Hering(int difficulty, int answer)
     {
-        Texture2D tex = new Texture2D(400, 400, TextureFormat.RGBA32, false);
+        Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 400 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
         Color darkBlue = new Color(0, 0, 0.5f);
@@ -136,7 +140,7 @@ public static class IllusionGenerator
 
     public static Sprite Ebbinghaus(int difficulty, int answer)
     {
-        Texture2D tex = new Texture2D(500, 200, TextureFormat.RGBA32, false);
+        Texture2D tex = new Texture2D(500 * RESOLUTION_SCALE, 200 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
         // Diff 1 = 8px bump. Diff 5 = 2px bump.
@@ -152,7 +156,7 @@ public static class IllusionGenerator
             int currentR = baseR + ((i == answer) ? delta : 0);
 
             // Draw center circle
-            DrawFilledCircle(tex, cx, 100, currentR, new Color(1f, 0.5f, 0f));
+            IllusionPainter.DrawFilledCircle(tex, cx, 100, currentR, new Color(1f, 0.5f, 0f));
 
             // Draw surrounding circles
             for (int j = 0; j < 6; j++)
@@ -160,7 +164,7 @@ public static class IllusionGenerator
                 float angle = j * 60f * Mathf.Deg2Rad;
                 int sx = cx + Mathf.RoundToInt(rDist[i] * Mathf.Cos(angle));
                 int sy = 100 + Mathf.RoundToInt(rDist[i] * Mathf.Sin(angle));
-                DrawFilledCircle(tex, sx, sy, sRadius[i], Color.cyan);
+                IllusionPainter.DrawFilledCircle(tex, sx, sy, sRadius[i], Color.cyan);
             }
         }
 
@@ -169,7 +173,7 @@ public static class IllusionGenerator
 
     public static Sprite BrightnessContrast(int difficulty, int answer)
     {
-        Texture2D tex = new Texture2D(400, 300, TextureFormat.RGBA32, false);
+        Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 300 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         Color leftOuter = new Color(0.1f, 0.1f, 0.1f); // #1A1A1A
         Color rightOuter = new Color(0.9f, 0.9f, 0.9f); // #E5E5E5
 
@@ -177,7 +181,7 @@ public static class IllusionGenerator
         IllusionPainter.DrawRect(tex, 200, 0, 200, 300, rightOuter);
         IllusionPainter.DrawLine(tex, 200, 0, 200, 300, grey, 2); // divider
 
-        // Diff 1 = 20/255. Diff 5 = 4/255.
+        // Diff 1 = 30/255. Diff 5 = 5/255.
         float delta = Mathf.Lerp(20f, 4f, DiffT(difficulty)) / 255f;
         float baseGrey = 136f / 255f; // #888888
 
@@ -192,7 +196,7 @@ public static class IllusionGenerator
 
     public static Sprite Ponzo(int difficulty, int answer)
     {
-        Texture2D tex = new Texture2D(400, 420, TextureFormat.RGBA32, false);
+        Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 420 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
         IllusionPainter.DrawLine(tex, 200, 30, 40, 420, black, 4);
@@ -215,7 +219,7 @@ public static class IllusionGenerator
 
     public static Sprite HermannGrid(int difficulty, int answer)
     {
-        Texture2D tex = new Texture2D(400, 400, TextureFormat.RGBA32, false);
+        Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 400 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
         IllusionPainter.Fill(tex, white);
 
         // Draw 5x5 black squares
@@ -231,8 +235,9 @@ public static class IllusionGenerator
 
         int dotCount = Mathf.Clamp(answer, 0, 3); // 0-3 dots
 
-        // Diff 1 = Bright red, Diff 5 = Near white
-        Color dotColor = Color.Lerp(new Color(1f, 0.26f, 0.26f), new Color(0.92f, 0.92f, 0.92f), DiffT(difficulty));
+        // Diff 1 = Medium Gray (Obvious against white)
+        // Diff 5 = Very Light Gray (Practically invisible, perfectly mimics the optical illusion)
+        Color dotColor = Color.Lerp(new Color(0.6f, 0.6f, 0.6f), new Color(0.96f, 0.96f, 0.96f), DiffT(difficulty));
 
         // Place N dots randomly at intersections
         for (int n = 0; n < dotCount; n++)
@@ -241,27 +246,49 @@ public static class IllusionGenerator
             int ry = Random.Range(0, 4);
             int cx = 32 + 56 + rx * 70 + 7; // +7 to center in the 14px gap
             int cy = 32 + 56 + ry * 70 + 7;
-            DrawFilledCircle(tex, cx, cy, 6, dotColor);
+            IllusionPainter.DrawFilledCircle(tex, cx, cy, 6, dotColor);
         }
 
         return IllusionPainter.MakeSprite(tex);
     }
 
-    private static void DrawFilledCircle(Texture2D tex, int cx, int cy, int r, Color c)
+    public static Sprite Jastrow(int difficulty, int answer)
     {
-        int rSq = r * r;
-        for (int x = -r; x <= r; x++)
+        // Create the canvas
+        Texture2D tex = new Texture2D(400 * RESOLUTION_SCALE, 400 * RESOLUTION_SCALE, TextureFormat.RGBA32, false);
+        IllusionPainter.Fill(tex, Color.white);
+
+        // Difficulty Scaling: 
+        // Diff 1 = 15 degrees wider (very obvious)
+        // Diff 5 = 2.5 degrees wider (requires squinting to notice)
+        float bonusAngle = Mathf.Lerp(15f, 2.5f, DiffT(difficulty));
+
+        // X-centers for the circles. Because the arcs curve to the left (like a 'C'), 
+        // the mathematical centers are pushed far to the right side of the canvas.
+        // This staggers them Left, Middle, and Right.
+        int[] cxOffsets = { 280, 360, 440 }; // A (Left), B (Middle), C (Right)
+
+        int R = 200;        // Larger radius for the horizontal view
+        int thickness = 40; // Slightly thicker
+
+        for (int i = 0; i < 3; i++)
         {
-            for (int y = -r; y <= r; y++)
+            // 180 degrees is the exact left side of a circle.
+            // Sweeping from 135 to 225 draws a perfect "C" shape.
+            float startDeg = 135f;
+            float endDeg = 225f;
+
+            if (i == answer)
             {
-                if (x * x + y * y <= rSq)
-                {
-                    int px = cx + x;
-                    int py = cy + y;
-                    if (px >= 0 && px < tex.width && py >= 0 && py < tex.height)
-                        tex.SetPixel(px, py, c);
-                }
+                // Make this specific shape actually wider
+                startDeg -= bonusAngle;
+                endDeg += bonusAngle;
             }
+
+            // All of them stay perfectly centered vertically (Y = 200)
+            IllusionPainter.DrawArc(tex, cxOffsets[i], 200, R, startDeg, endDeg, Color.black, thickness);
         }
+
+        return IllusionPainter.MakeSprite(tex);
     }
 }

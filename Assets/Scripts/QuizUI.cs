@@ -207,11 +207,13 @@ public class QuizUI : MonoBehaviour
         buttonB.GetComponentInChildren<TextMeshProUGUI>().text = q.answerB;
         buttonC.GetComponentInChildren<TextMeshProUGUI>().text = q.answerC;
         buttonD.GetComponentInChildren<TextMeshProUGUI>().text = q.answerD;
-        SetButtonsActive(true);
 
+        // Compute effective answer now so the log is accurate and the result can be cached.
         string[] answers = { q.answerA, q.answerB, q.answerC, q.answerD };
-        string correctText = answers[Mathf.Clamp(q.correctAnswerIndex, 0, 3)];
-        Debug.Log($"[QuizUI] ({q.questionType}) Correct: [{q.correctAnswerIndex}] {correctText}  |  NOTE: every 3rd question globally overrides to [0] Left regardless");
+        int effectiveCorrectIndex = GameManager.Instance.GetEffectiveCorrectIndex(q);
+        Debug.Log($"[QuizUI] ({q.questionType}) Base: [{q.correctAnswerIndex}] {answers[Mathf.Clamp(q.correctAnswerIndex, 0, 3)]} | Effective: [{effectiveCorrectIndex}] {answers[Mathf.Clamp(effectiveCorrectIndex, 0, 3)]}");
+
+        SetButtonsActive(true);
 
         if (gauntletScoreText != null)
         {
@@ -239,9 +241,7 @@ public class QuizUI : MonoBehaviour
         if (timerText != null) timerText.gameObject.SetActive(false);
         SetButtonsActive(false);
 
-        // Resolve outcome — GameManager handles the Every3rdAnswerLeft override internally
-        int effectiveCorrectIndex = GameManager.Instance.GetEffectiveCorrectIndex(q);
-
+        // effectiveCorrectIndex was pre-computed at display time above
         q.wasAnswered = !timedOut;
         q.wasCorrect = !timedOut && pendingAnswerIndex == effectiveCorrectIndex;
 

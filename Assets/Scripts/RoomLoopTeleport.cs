@@ -43,13 +43,26 @@ public class MetaSeamlessPortal : MonoBehaviour
         if (Time.time < lastTeleportTime + cooldownSeconds) return;
 
         // Check if the thing that entered the box is actually the player
-        // We do this by looking to see if the collider belongs to the Locomotor rig
         if (other.GetComponentInParent<FirstPersonLocomotor>() == locomotor)
         {
-            ExecuteSeamlessTeleport();
+            // IMPORTANT: Set the cooldown timestamp BEFORE the delay. 
+            // If we don't, the player might trigger this multiple times in a single frame!
+            lastTeleportTime = Time.time;
 
-            GameManager.Instance.OnLoopTeleport();
+            // Start the delayed teleport routine
+            StartCoroutine(DelayedTeleport());
         }
+    }
+
+    private IEnumerator DelayedTeleport()
+    {
+        // Wait exactly one frame. This allows other triggers (like OnRoomEnter) 
+        // that were hit at the exact same time to process their logic first.
+        yield return null;
+
+        // Now execute the teleport and notify the GameManager
+        ExecuteSeamlessTeleport();
+        GameManager.Instance.OnLoopTeleport();
     }
 
     private void ExecuteSeamlessTeleport()

@@ -11,6 +11,8 @@ public static class QuizGenerator
         public int correct;
         public QuizQuestion.SuccessEffect onSuccess;
         public QuizQuestion.FailEffect   onFail;
+
+        public float? customTimer; //optional timer value
     }
 
     // Answers are kept plausible-but-wrong so the player actually has to know.
@@ -20,46 +22,33 @@ public static class QuizGenerator
             question   = "How many punishments trigger an automatic run reset?",
             a = "5", b = "7", c = "3", d = "10",
             correct    = 1,  // B = 7
-            onSuccess  = QuizQuestion.SuccessEffect.PunishmentShield,
-            onFail     = QuizQuestion.FailEffect.Punishment,
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
         },
         new Template {
             question   = "How many rooms must you pass through to complete the game?",
             a = "15", b = "25", c = "10", d = "20",
             correct    = 3,  // D = 20
-            onSuccess  = QuizQuestion.SuccessEffect.RevealRule,
-            onFail     = QuizQuestion.FailEffect.DoublePunishment,
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
         },
         new Template {
             question   = "Every Nth room contains a shop. What is N?",
             a = "5", b = "7", c = "9", d = "3",
             correct    = 2,  // C = 9
-            onSuccess  = QuizQuestion.SuccessEffect.PunishmentShield,
-            onFail     = QuizQuestion.FailEffect.Punishment,
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
         },
         new Template {
             question   = "Completing a challenge successfully grants you which benefit?",
             a = "An extra life", b = "A punishment shield", c = "A rulebook hint", d = "Double points",
             correct    = 1,  // B = punishment shield
-            onSuccess  = QuizQuestion.SuccessEffect.RevealRule,
-            onFail     = QuizQuestion.FailEffect.Punishment,
-        },
-        new Template {
-            question   = "The right chair is slightly pulled out from the table.\nWhat rule does this trigger?",
-            a = "All safe doors become punishments",
-            b = "All random doors become safe",
-            c = "Rules are inverted for this room",
-            d = "Nothing — the last guy forgot to push it in",
-            correct    = 3,  // D = nothing (the troll meta-rule)
-            onSuccess  = QuizQuestion.SuccessEffect.PunishmentShield,
-            onFail     = QuizQuestion.FailEffect.DoublePunishment,
-        },
-        new Template {
-            question   = "Every 3rd question during any quiz or challenge session,\nyou MUST select a specific answer regardless of the actual correct answer.\nWhich answer must you always select on those questions?",
-            a = "Right (C)", b = "Middle (B)", c = "Left (A)", d = "Last option (D)",
-            correct    = 2,  // C = Left / index 0 = A
-            onSuccess  = QuizQuestion.SuccessEffect.RevealRule,
-            onFail     = QuizQuestion.FailEffect.DoublePunishment,
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
         },
         new Template {
             question   = "You reset your run with only 1 active punishment.\nWhat happens at the start of your NEXT run?",
@@ -68,32 +57,105 @@ public static class QuizGenerator
             c = "Your entire save file is wiped",
             d = "You automatically win",
             correct    = 1,  // B — low-punishment restart penalty
-            onSuccess  = QuizQuestion.SuccessEffect.PunishmentShield,
-            onFail     = QuizQuestion.FailEffect.Punishment,
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
         },
         new Template {
             question   = "How often does a quiz appear in the room sequence?",
             a = "Every 3 rooms", b = "Every 7 rooms", c = "Every 9 rooms", d = "Every 5 rooms",
             correct    = 1,  // B = 7
-            onSuccess  = QuizQuestion.SuccessEffect.RevealRule,
-            onFail     = QuizQuestion.FailEffect.Punishment,
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
         },
         new Template {
             question   = "How often does a challenge appear in the room sequence?",
             a = "Every 3 rooms", b = "Every 5 rooms", c = "Every 7 rooms", d = "Every 9 rooms",
             correct    = 0,  // A = 3
-            onSuccess  = QuizQuestion.SuccessEffect.PunishmentShield,
-            onFail     = QuizQuestion.FailEffect.Punishment,
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
         },
         new Template {
-            question   = "You have completed 20 rooms and nothing seems to happen.\nWhat do you do?",
-            a = "Keep going — there must be more rooms",
-            b = "The door behind you leads to the exit",
-            c = "There is no exit — this is a loop forever",
-            d = "Buy something from the shop",
-            correct    = 1,  // B — MinusOne room has the exit
-            onSuccess  = QuizQuestion.SuccessEffect.RevealRule,
-            onFail     = QuizQuestion.FailEffect.DoublePunishment,
+            question   = "How many unique sound effects happen when you pick up a mug?",
+            a = "12", b = "16", c = "14", d = "15",
+            correct    = 3,  // D = 15
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
+        },
+        new Template {
+            question   = "How many unique sound effects happen when you drop a mug?",
+            a = "8", b = "5", c = "6", d = "7",
+            correct    = 2,  // C = 5
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 20f,
+        },
+        new Template {
+            question   = "How many unique sound effects happen when you attempt to open a locked door?",
+            a = "7", b = "4", c = "8", d = "10",
+            correct    = 0,  // A = 7
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
+        },
+        new Template {
+            question   = "What happens when you attempt to take a mug with you to the next room?",
+            a = "A special rule is unlocked", b = "You win!", c = "A punishment is removed", d = "None of the above",
+            correct    = 3,  // D = ^
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 30f,
+        },
+        new Template {
+            question   = "How many books were in the previous room (HINT think hard)?",
+            a = "30", b = "37", c = "41", d = "36",
+            correct    = 3,  // D = 36
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 10f,
+        },
+        new Template {
+            question   = "What is the color of the doors behind you when starting a new round?",
+            a = "grey", b = "gray", c = "black", d = "white",
+            correct    = 1,  // B = gray
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 10f,
+        },
+        new Template {
+            question   = "What is the color of the trim in the room?",
+            a = "milk", b = "off-white", c = "cream", d = "white",
+            correct    = 2,  // C = cream
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 10f,
+        },
+        new Template {
+            question   = "What is the first letter of the alphabet?",
+            a = "A) B", b = "B) A", c = "C) Answer A", d = "D) All of the above",
+            correct    = 1,  // B = A
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 15f,
+        },
+        new Template {
+            question   = "If you were to guess randomly, what is the chance of getting this question right?",
+            a = "25%", b = "50%", c = "50%", d = "All of the above",
+            correct    = 3,  // D, idk
+            onSuccess  = QuizQuestion.SuccessEffect.None,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 10f,
+        },
+        new Template {
+            question   = "The correct answer is option C.",
+            a = "A) The answer", b = "B) No it isn't", c = "C) False", d = "D) C",
+            correct    = 1,  // B = No it isn't, because answer C is false
+            onSuccess  = QuizQuestion.SuccessEffect.PunishmentShield,
+            onFail     = QuizQuestion.FailEffect.TriplePunishment,
+            customTimer = 15f,
         },
     };
 
@@ -112,7 +174,7 @@ public static class QuizGenerator
             answerC            = t.c,
             answerD            = t.d,
             correctAnswerIndex = t.correct,
-            timeLimit          = -1f, // no timer on text quizzes
+            timeLimit          = t.customTimer ?? -1f,
             successEffect      = t.onSuccess,
             failEffect         = t.onFail,
         };
@@ -133,7 +195,7 @@ public static class QuizGenerator
             answerC            = t.c,
             answerD            = t.d,
             correctAnswerIndex = t.correct,
-            timeLimit          = -1f,
+            timeLimit          = t.customTimer ?? -1f,
             successEffect      = QuizQuestion.SuccessEffect.RevealRule,
             failEffect         = QuizQuestion.FailEffect.DoublePunishment,
         };

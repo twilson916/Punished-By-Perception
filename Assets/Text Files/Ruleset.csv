@@ -2,10 +2,10 @@ Name,String,Door Color,Handle Color,Result type,Parent Name
 GeGa,Green Doors are Safe,Green,Gray,Safe,
 GeGe,...except with green handles,Green,Green,Punishment,GeGa
 GeWh,...usually with white handles,Green,White,Safe,GeGa
-GeCy,...rarely with cyan handles,Green,Cyan,Random,GeGa
-GeBu,...however blue handles are punishments central,Green,Blue,Punishment,GeGa
+GeCy,...randomly with cyan handles,Green,Cyan,Random,GeGa
+GeBu,...however blue handles are punishment central,Green,Blue,Punishment,GeGa
 GeYw,...but yellow handles are just wrong,Green,Yellow,Punishment,GeGa
-GeBk,...often with black handles,Green,Black,Safe,GeGa
+GeBk,...consistently with black handles,Green,Black,Safe,GeGa
 GeRd,...strangely enough with red handles,Green,Red,Safe,GeGa
 GeMg,...but are challenges with magenta handles,Green,Magenta,Challenge,GeGa
 YwGa,Yellow Doors are Challenges,Yellow,Gray,Challenge,
@@ -13,7 +13,7 @@ YwGe,...except with green handles,Yellow,Green,Punishment,YwGa
 YwYw,...especially with yellow handles,Yellow,Yellow,Challenge,YwGa
 YwBk,...but are safe with black handles,Yellow,Black,Safe,YwGa
 YwCy,...cyan handles are unpredictable,Yellow,Cyan,Random,YwGa
-YwMg,...but are very suspicious with magenta handles,Yellow,Magenta,Challenge,YwGa
+YwMg,...and are suspiciously challenging with magenta handles,Yellow,Magenta,Challenge,YwGa
 YwBu,...blue handles might mix to green but are defintely not safe,Yellow,Blue,Punishment,YwGa
 YwWh,...and are often louder than you think with white handles,Yellow,White,Challenge,YwGa
 YwRd,...but appear to be safe with red handles,Yellow,Red,Safe,YwGa
@@ -21,11 +21,11 @@ RdGa,Red Doors are Punishments,Red,Gray,Punishment,
 RdGe,...especially with green handles,Red,Green,Punishment,RdGa
 RdMg,...especially with magenta handles,Red,Magenta,Punishment,RdGa
 RdBk,...especially with black handles,Red,Black,Punishment,RdGa
-RdRd,...did you honestly think red on red would be safe?!,Red,Red,Safe,RdGa
+RdRd,...did you honestly think red on red would be safe?!,Red,Red,Punishment,RdGa
 RdWh,"...unless it's white; then it's still a punishment",Red,White,Punishment,RdGa
 RdYw,...except with yellow handles,Red,Yellow,Safe,RdGa
 RdCy,...but are challenges with cyan handles,Red,Cyan,Challenge,RdGa
-RdBu,...but are slightly suspicious with blue handles,Red,Blue,Safe,RdGa
+RdBu,...but are suspiciously safe with blue handles,Red,Blue,Safe,RdGa
 CyGa,Cyan Doors are ALWAYS Random,Cyan,Gray,Random,
 CyBu,...JK they are safe with blue handles,Cyan,Blue,Safe,CyGa
 CyGe,...JK they are punishments with green handles,Cyan,Green,Punishment,CyGa
@@ -44,9 +44,9 @@ BkBu,...blue handles will make you feel more blue,Black,Blue,Punishment,BkGa
 BkMg,...magenta handles are spicy,Black,Magenta,Punishment,BkGa
 BkWh,...black on white is dangerous,Black,White,Punishment,BkGa
 BkBk,...black on black is safe,Black,Black,Safe,BkGa
-MgGa,Magenta doors might be Cursed,Magenta,Gray,Challenge,
+MgGa,Magenta doors might be cursed prepare to be surprised,Magenta,Gray,Challenge,
 MgRd,...red handles are extra cursed,Magenta,Red,Challenge,MgGa
-MgGe,...green handles are not,Magenta,Green,Punishment,MgGa
+MgGe,...green handles are not; they are just bad,Magenta,Green,Punishment,MgGa
 MgYw,"...yellow handles are hard on the eyes; who knows what happens",Magenta,Yellow,Random,MgGa
 MgBu,...handles feel blue when they go through this view,Magenta,Blue,Punishment,MgGa
 MgMg,"...magenta handles feel like a easy divorce; amazing",Magenta,Magenta,Safe,MgGa

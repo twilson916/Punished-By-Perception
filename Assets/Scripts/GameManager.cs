@@ -55,7 +55,7 @@ public class GameManager : MonoBehaviour
     public DifficultyMode difficulty = DifficultyMode.Normal;
 
     // Constants
-    private const int ROOMS_TO_WIN = 5;//20; //FIXME testing only
+    private const int ROOMS_TO_WIN = 20;
     private const int MAX_PUNISHMENTS = 7;
     private const int CHALLENGE_ROOM_INTERVAL = 3;
     private const int QUIZ_ROOM_INTERVAL = 7;
@@ -182,9 +182,10 @@ public class GameManager : MonoBehaviour
         );
 
         sceneRooms[(int)roomNum].ChangeRoomColor(roomColors);
-
-        // Pass environment modifiers to the room controller for object placement, lighting, etc.
         sceneRooms[(int)roomNum].ApplyEnvironmentModifiers(config.environment);
+
+        if (roomNum == RoomNumber.One || roomNum == RoomNumber.Two)
+            LogRoomDoors(roomNum, config);
     }
 
     public void OnLoopTeleport() // Room 3 → Room 1 teleport
@@ -338,7 +339,7 @@ public class GameManager : MonoBehaviour
         if (totalRoomsVisited % CHALLENGE_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
             Debug.Log("[GameManager] Challenge room — queueing visual challenge.");
-            int diff = Mathf.Clamp(totalRoomsVisited / 5 + 1, 1, 5);
+            int diff = Mathf.Clamp(totalRoomsVisited / 3 + 1, 1, 5);
             var cq = ChallengeGenerator.Generate(diff);
             sceneRooms[(int)newRoomNum].EnqueueQuestion(cq);
             if (newRoomNum == RoomNumber.Three)
@@ -348,11 +349,15 @@ public class GameManager : MonoBehaviour
 
         if (totalRoomsVisited % QUIZ_ROOM_INTERVAL == 0 && newRoomNum != RoomNumber.One)
         {
-            Debug.Log("[GameManager] Quiz room — queueing meta quiz question.");
-            var qq = QuizGenerator.Generate();
-            sceneRooms[(int)newRoomNum].EnqueueQuestion(qq);
-            if (newRoomNum == RoomNumber.Three)
-                sceneRooms[(int)RoomNumber.One].EnqueueQuestion(qq); // mirror to Room 1 for after teleport
+            // 2 qustions first quiz 3 the next
+            for (int i = 0; i < totalRoomsVisited / QUIZ_ROOM_INTERVAL + 1; i++)
+            {
+                Debug.Log("[GameManager] Quiz room — queueing meta quiz question.");
+                var qq = QuizGenerator.Generate();
+                sceneRooms[(int)newRoomNum].EnqueueQuestion(qq);
+                if (newRoomNum == RoomNumber.Three)
+                    sceneRooms[(int)RoomNumber.One].EnqueueQuestion(qq); // mirror to Room 1 for after teleport
+            }
             awaitingQuizUnlock = true;
         }
 
@@ -412,7 +417,7 @@ public class GameManager : MonoBehaviour
 
             case RuleResultType.Challenge:
                 Debug.Log($"[GameManager] CHALLENGE — Rule: {door.ruleName}");
-                int cDiff = Mathf.Clamp(totalRoomsVisited / 5 + 1, 1, 5);
+                int cDiff = Mathf.Clamp(totalRoomsVisited / 3 + 1, 1, 5);
                 var challengeQ = ChallengeGenerator.Generate(cDiff);
                 // Route challenge to the next room so it blocks the player on entry.
                 // Apply the same Room 3/1 duality as all other enqueue sites.
@@ -723,5 +728,13 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log("[GameManager] Run reset complete.");
+    }
+
+    private void LogRoomDoors(RoomNumber roomNum, RoomConfig config)
+    {
+        string L = config.doors[0]?.finalResult.ToString() ?? "null";
+        string C = config.doors[1]?.finalResult.ToString() ?? "null";
+        string R = config.doors[2]?.finalResult.ToString() ?? "null";
+        Debug.Log($"=== DOORS [{roomNum}] === Left: {L}  |  Center: {C}  |  Right: {R}");
     }
 }

@@ -4758,12 +4758,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canvasGroup: {fileID: 0}
+  interactionSDKObject: {fileID: 0}
   startScreen: {fileID: 1020490154}
   questionScreen: {fileID: 1454344944}
   resultScreen: {fileID: 1011781065}
   finalScreen: {fileID: 1200844397}
   startButton: {fileID: 31180355}
-  questionText: {fileID: 684168557}
+  textOnlyQuestionText: {fileID: 0}
+  imageQuestionText: {fileID: 0}
   questionImage: {fileID: 2119868321}
   buttonA: {fileID: 989693645}
   buttonB: {fileID: 995296953}
@@ -12160,6 +12162,11 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2123079400874853867, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2462339069848937170, guid: 0d6ebd74a1642294bb5776639c1d23c5,
         type: 3}
       propertyPath: m_AnchorMax.y
@@ -12225,6 +12232,16 @@ PrefabInstance:
       propertyPath: roomNumber
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 3294912114735420456, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3344108443499181812, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: interactionSDKObject
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3618683645320546521, guid: 0d6ebd74a1642294bb5776639c1d23c5,
         type: 3}
       propertyPath: roomNumber
@@ -12278,6 +12295,11 @@ PrefabInstance:
     - target: {fileID: 4782892170850601048, guid: 0d6ebd74a1642294bb5776639c1d23c5,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4918527224182860240, guid: 0d6ebd74a1642294bb5776639c1d23c5,
+        type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5341880088841764729, guid: 0d6ebd74a1642294bb5776639c1d23c5,
