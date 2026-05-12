@@ -88,7 +88,7 @@ public static class QuizGenerator
         new Template {
             question   = "How many unique sound effects happen when you drop a mug?",
             a = "8", b = "5", c = "6", d = "7",
-            correct    = 2,  // C = 5
+            correct    = 1,  // B = 5
             onSuccess  = QuizQuestion.SuccessEffect.None,
             onFail     = QuizQuestion.FailEffect.TriplePunishment,
             customTimer = 20f,
